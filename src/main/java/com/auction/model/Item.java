@@ -17,7 +17,7 @@ public class Item {
         this.startingPrice = startingPrice;
         this.currentPrice = currentPrice;
     }
-    public int getId() {
+    public boolean getId() {
         return id;
     }
 
