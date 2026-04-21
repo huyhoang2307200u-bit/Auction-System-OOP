@@ -1,4 +1,8 @@
-package main.java.com.auction.client;
+package com.auction.client;
+
+import com.auction.common.Request;
+import com.auction.common.Response;
+import com.google.gson.Gson;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +18,8 @@ public class SocketClient {
     private static final int PORT = 9999;
 
     public static void main(String[] args) {
+        Gson gson = new Gson();
+
         System.out.println("========================================");
         System.out.println("         AUCTION CLIENT STARTING        ");
         System.out.println("========================================");
@@ -28,23 +34,51 @@ public class SocketClient {
         ) {
             log("Connected to server " + HOST + ":" + PORT);
 
-            String welcome1 = input.readLine();
-            String welcome2 = input.readLine();
-
-            System.out.println(welcome1);
-            System.out.println(welcome2);
-
             while (true) {
-                System.out.print("\nEnter message: ");
-                String message = scanner.nextLine();
+                System.out.println("\n===== MENU =====");
+                System.out.println("1. Send PING");
+                System.out.println("2. Send MESSAGE");
+                System.out.println("3. EXIT");
+                System.out.print("Choose: ");
 
-                output.println(message);
-                log("Sent: " + message);
+                String choice = scanner.nextLine();
+                Request request = null;
 
-                String response = input.readLine();
-                System.out.println("Server response: " + response);
+                switch (choice) {
+                    case "1":
+                        request = new Request("PING", "Hello Server");
+                        break;
 
-                if ("exit".equalsIgnoreCase(message.trim())) {
+                    case "2":
+                        System.out.print("Enter your message: ");
+                        String userMessage = scanner.nextLine();
+                        request = new Request("MESSAGE", userMessage);
+                        break;
+
+                    case "3":
+                        request = new Request("EXIT", "Disconnect");
+                        break;
+
+                    default:
+                        System.out.println("Invalid choice.");
+                        continue;
+                }
+
+                String requestJson = gson.toJson(request);
+                output.println(requestJson);
+
+                log("Sent JSON: " + requestJson);
+
+                String responseJson = input.readLine();
+                Response response = gson.fromJson(responseJson, Response.class);
+
+                System.out.println("\n----- SERVER RESPONSE -----");
+                System.out.println("Success : " + response.isSuccess());
+                System.out.println("Message : " + response.getMessage());
+                System.out.println("Data    : " + response.getData());
+                System.out.println("---------------------------");
+
+                if ("3".equals(choice)) {
                     log("Client stopped.");
                     break;
                 }

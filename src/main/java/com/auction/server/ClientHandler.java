@@ -1,4 +1,8 @@
-package main.java.com.auction.server;
+package com.auction.server;
+
+import com.auction.common.Request;
+import com.auction.common.Response;
+import com.google.gson.Gson;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,9 +14,11 @@ import java.time.format.DateTimeFormatter;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
+    private final Gson gson;
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
+        this.gson = new Gson();
     }
 
     @Override
@@ -28,23 +34,34 @@ public class ClientHandler implements Runnable {
                 );
                 PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true)
         ) {
-            output.println("Connected to Auction Server successfully.");
-            output.println("Type your message. Type 'exit' to disconnect.");
+            String rawJson;
 
-            String message;
+            while ((rawJson = input.readLine()) != null) {
+                log(clientInfo, "Raw JSON received: " + rawJson);
 
-            while ((message = input.readLine()) != null) {
-                log(clientInfo, "Received: " + message);
+                Response response;
 
-                if ("exit".equalsIgnoreCase(message.trim())) {
-                    output.println("Goodbye! Disconnecting from server...");
-                    log(clientInfo, "Client requested disconnection.");
-                    break;
+                try {
+                    Request request = gson.fromJson(rawJson, Request.class);
+
+                    if (request == null || request.getAction() == null) {
+                        response = new Response(false, "Invalid request.", null);
+                    } else {
+                        response = handleRequest(request, clientInfo);
+                    }
+
+                } catch (Exception e) {
+                    response = new Response(false, "JSON parse error: " + e.getMessage(), null);
                 }
 
-                String response = buildResponse(message);
-                output.println(response);
-                log(clientInfo, "Response sent.");
+                String responseJson = gson.toJson(response);
+                output.println(responseJson);
+
+                log(clientInfo, "Response sent: " + responseJson);
+
+                if (response.getMessage().equals("Goodbye! Disconnecting from server...")) {
+                    break;
+                }
             }
 
         } catch (IOException e) {
@@ -59,8 +76,39 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private String buildResponse(String message) {
-        return "Server received your message: \"" + message + "\"";
+    private Response handleRequest(Request request, String clientInfo) {
+        String action = request.getAction().trim().toUpperCase();
+
+        switch (action) {
+            case "PING":
+                return new Response(
+                        true,
+                        "PONG from server",
+                        "Time: " + getCurrentTime()
+                );
+
+            case "MESSAGE":
+                log(clientInfo, "Message content: " + request.getMessage());
+                return new Response(
+                        true,
+                        "Server received your message successfully.",
+                        request.getMessage()
+                );
+
+            case "EXIT":
+                return new Response(
+                        true,
+                        "Goodbye! Disconnecting from server...",
+                        null
+                );
+
+            default:
+                return new Response(
+                        false,
+                        "Unknown action: " + action,
+                        null
+                );
+        }
     }
 
     private void log(String clientInfo, String message) {
