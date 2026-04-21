@@ -1,7 +1,9 @@
-package com.auction.server;
+package main.java.com.auction.server;
 
 public class ServerMain {
-    public static void main(String[] args){
-
+    public static void main(String[] args) {
+        int port = 9999;
+        AuctionServer server = new AuctionServer(port);
+        server.start();
     }
 }
