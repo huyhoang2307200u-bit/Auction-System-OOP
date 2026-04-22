@@ -1,19 +1,16 @@
 package com.auction.service;
 
-import com.auction.model.Item;
-import com.auction.model.User;
+import com.auction.model.Auction;
+import com.auction.model.Bidder;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AuctionManager {
-    // BƯỚC 1: Tạo biến static để giữ đối tượng duy nhất (Singleton)
     private static AuctionManager instance;
-    private List<Item> items = new ArrayList<>();
+    private List<Auction> auctions = new ArrayList<>(); // Quản lý danh sách các phiên
 
-    // BƯỚC 2: Để private constructor để không ai bên ngoài tự tạo mới được
     private AuctionManager() {}
 
-    // BƯỚC 3: Hàm lấy đối tượng duy nhất (Nhóm yêu cầu)
     public static synchronized AuctionManager getInstance() {
         if (instance == null) {
             instance = new AuctionManager();
@@ -21,27 +18,41 @@ public class AuctionManager {
         return instance;
     }
 
-    public List<Item> getAvailableItems() {
-        return items;
-    }
-
-    // BƯỚC 4: Hàm đặt giá - Logic cực kỳ quan trọng
-    public synchronized void placeBid(String itemId, double amount, User bidder) throws Exception {
-        for (Item item : items) {
-            if (item.getId().equals(itemId)) {
-                // KIỂM TRA LOGIC: Nếu giá đặt thấp hơn hoặc bằng giá hiện tại -> Báo lỗi
-                if (amount <= item.getCurrentPrice()) {
-                    throw new Exception("Giá đặt phải lớn hơn " + item.getCurrentPrice());
+    // BƯỚC 4: Logic đặt giá - Đã tích hợp Observer và Kiểm tra hợp lệ
+    public synchronized void placeBid(int auctionId, double amount, Bidder bidder) throws Exception {
+        for (Auction auction : auctions) {
+            if (auction.getId() == auctionId) {
+                
+                // 1. KIỂM TRA TRẠNG THÁI: Phiên phải đang hoạt động
+                if (!auction.isActive()) {
+                    throw new Exception("Phiên đấu giá này hiện đã kết thúc!");
                 }
+
+                // 2. KIỂM TRA BƯỚC GIÁ: Giá mới >= Giá hiện tại + Bước giá tối thiểu
+                double minRequired = auction.getHighestBid() + auction.getMinIncrement();
+                if (amount < minRequired) {
+                    throw new Exception("Giá đặt phải lớn hơn hoặc bằng: " + minRequired);
+                }
+
+                // 3. CẬP NHẬT DỮ LIỆU: Nếu hợp lệ thì ghi nhận người dẫn đầu mới
+                auction.setHighestBid(amount);
+                auction.setHighestBidder(bidder);
+
+                // 4. KÍCH HOẠT OBSERVER: Đây là phần quan trọng nhất của Người A
+                // Hàm này sẽ báo cho toàn bộ các màn hình UI tự động cập nhật số mới
+                auction.notifyObservers();
                 
-                // Nếu hợp lệ thì cập nhật giá mới
-                item.setCurrentPrice(amount);
-                
-                // THÔNG BÁO CHO GUI (Observer)
-                // Chỗ này bạn sẽ gọi hàm notify để màn hình của các bạn khác tự nhảy số
-                System.out.println("Sản phẩm " + item.getName() + " vừa có giá mới: " + amount);
+                System.out.println("Đặt giá thành công cho phiên: " + auctionId);
                 return;
             }
         }
+        throw new Exception("Không tìm thấy phiên đấu giá này!");
     }
+    public void createAuction(Auction auction) {
+    // Logic: Kiểm tra nếu item chưa có trong phiên nào khác thì mới cho tạo
+    if (auction != null && !auctions.contains(auction)) {
+        auctions.add(auction);
+        System.out.println("Đã tạo phiên đấu giá cho sản phẩm: " + auction.getItem().getName());
+    }
+}
 }
