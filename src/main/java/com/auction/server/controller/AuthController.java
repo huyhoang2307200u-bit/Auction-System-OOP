@@ -23,7 +23,8 @@ public class AuthController {
         boolean isAuthenticated = authService.authenticate(username, password);
 
         if (isAuthenticated) {
-            return new Response(true, "Login successful.", "Welcome " + username);
+            String role = authService.getUserRole(username);
+            return new Response(true, "Login successful.", "Welcome " + username + " | Role: " + role);
         } else {
             return new Response(false, "Invalid username or password.", null);
         }
