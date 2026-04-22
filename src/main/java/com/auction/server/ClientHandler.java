@@ -15,10 +15,12 @@ import java.time.format.DateTimeFormatter;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final Gson gson;
+    private final RequestProcessor requestProcessor;
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
         this.gson = new Gson();
+        this.requestProcessor = new RequestProcessor();
     }
 
     @Override
@@ -43,12 +45,7 @@ public class ClientHandler implements Runnable {
 
                 try {
                     Request request = gson.fromJson(rawJson, Request.class);
-
-                    if (request == null || request.getAction() == null) {
-                        response = new Response(false, "Invalid request.", null);
-                    } else {
-                        response = handleRequest(request, clientInfo);
-                    }
+                    response = requestProcessor.process(request);
 
                 } catch (Exception e) {
                     response = new Response(false, "JSON parse error: " + e.getMessage(), null);
@@ -59,7 +56,7 @@ public class ClientHandler implements Runnable {
 
                 log(clientInfo, "Response sent: " + responseJson);
 
-                if (response.getMessage().equals("Goodbye! Disconnecting from server...")) {
+                if ("Goodbye! Disconnecting from server...".equals(response.getMessage())) {
                     break;
                 }
             }
@@ -73,41 +70,6 @@ public class ClientHandler implements Runnable {
             } catch (IOException e) {
                 log(clientInfo, "Failed to close socket: " + e.getMessage());
             }
-        }
-    }
-
-    private Response handleRequest(Request request, String clientInfo) {
-        String action = request.getAction().trim().toUpperCase();
-
-        switch (action) {
-            case "PING":
-                return new Response(
-                        true,
-                        "PONG from server",
-                        "Time: " + getCurrentTime()
-                );
-
-            case "MESSAGE":
-                log(clientInfo, "Message content: " + request.getMessage());
-                return new Response(
-                        true,
-                        "Server received your message successfully.",
-                        request.getMessage()
-                );
-
-            case "EXIT":
-                return new Response(
-                        true,
-                        "Goodbye! Disconnecting from server...",
-                        null
-                );
-
-            default:
-                return new Response(
-                        false,
-                        "Unknown action: " + action,
-                        null
-                );
         }
     }
 

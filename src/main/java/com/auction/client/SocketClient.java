@@ -38,7 +38,8 @@ public class SocketClient {
                 System.out.println("\n===== MENU =====");
                 System.out.println("1. Send PING");
                 System.out.println("2. Send MESSAGE");
-                System.out.println("3. EXIT");
+                System.out.println("3. LOGIN");
+                System.out.println("4. EXIT");
                 System.out.print("Choose: ");
 
                 String choice = scanner.nextLine();
@@ -56,6 +57,16 @@ public class SocketClient {
                         break;
 
                     case "3":
+                        System.out.print("Enter username: ");
+                        String username = scanner.nextLine();
+
+                        System.out.print("Enter password: ");
+                        String password = scanner.nextLine();
+
+                        request = new Request("LOGIN", username, password);
+                        break;
+
+                    case "4":
                         request = new Request("EXIT", "Disconnect");
                         break;
 
@@ -78,7 +89,7 @@ public class SocketClient {
                 System.out.println("Data    : " + response.getData());
                 System.out.println("---------------------------");
 
-                if ("3".equals(choice)) {
+                if ("4".equals(choice)) {
                     log("Client stopped.");
                     break;
                 }
