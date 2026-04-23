@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,7 +40,8 @@ public class SocketClient {
                 System.out.println("1. Send PING");
                 System.out.println("2. Send MESSAGE");
                 System.out.println("3. LOGIN");
-                System.out.println("4. EXIT");
+                System.out.println("4. GET_AUCTIONS");
+                System.out.println("5. EXIT");
                 System.out.print("Choose: ");
 
                 String choice = scanner.nextLine();
@@ -67,6 +69,10 @@ public class SocketClient {
                         break;
 
                     case "4":
+                        request = new Request("GET_AUCTIONS", "fetch auctions");
+                        break;
+
+                    case "5":
                         request = new Request("EXIT", "Disconnect");
                         break;
 
@@ -89,7 +95,7 @@ public class SocketClient {
                 System.out.println("Data    : " + response.getData());
                 System.out.println("---------------------------");
 
-                if ("4".equals(choice)) {
+                if ("5".equals(choice)) {
                     log("Client stopped.");
                     break;
                 }

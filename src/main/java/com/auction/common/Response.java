@@ -3,12 +3,12 @@ package com.auction.common;
 public class Response {
     private boolean success;
     private String message;
-    private String data;
+    private Object data;
 
     public Response() {
     }
 
-    public Response(boolean success, String message, String data) {
+    public Response(boolean success, String message, Object data) {
         this.success = success;
         this.message = message;
         this.data = data;
@@ -30,11 +30,11 @@ public class Response {
         this.message = message;
     }
 
-    public String getData() {
+    public Object getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(Object data) {
         this.data = data;
     }
 
@@ -43,7 +43,7 @@ public class Response {
         return "Response{" +
                 "success=" + success +
                 ", message='" + message + '\'' +
-                ", data='" + data + '\'' +
+                ", data=" + data +
                 '}';
     }
 }

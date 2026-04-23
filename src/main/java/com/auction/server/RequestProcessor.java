@@ -2,13 +2,16 @@ package com.auction.server;
 
 import com.auction.common.Request;
 import com.auction.common.Response;
+import com.auction.server.controller.AuctionController;
 import com.auction.server.controller.AuthController;
 
 public class RequestProcessor {
     private final AuthController authController;
+    private final AuctionController auctionController;
 
     public RequestProcessor() {
         this.authController = new AuthController();
+        this.auctionController = new AuctionController();
     }
 
     public Response process(Request request) {
@@ -27,6 +30,9 @@ public class RequestProcessor {
 
             case "LOGIN":
                 return authController.login(request);
+
+            case "GET_AUCTIONS":
+                return auctionController.getAuctions();
 
             case "EXIT":
                 return new Response(true, "Goodbye! Disconnecting from server...", null);
