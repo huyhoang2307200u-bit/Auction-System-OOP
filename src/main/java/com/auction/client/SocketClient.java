@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.lang.reflect.Type;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,39 +40,56 @@ public class SocketClient {
                 System.out.println("2. Send MESSAGE");
                 System.out.println("3. LOGIN");
                 System.out.println("4. GET_AUCTIONS");
-                System.out.println("5. EXIT");
+                System.out.println("5. PLACE_BID");
+                System.out.println("6. EXIT");
                 System.out.print("Choose: ");
 
                 String choice = scanner.nextLine();
-                Request request = null;
+                Request request = new Request();
 
                 switch (choice) {
                     case "1":
-                        request = new Request("PING", "Hello Server");
+                        request.setAction("PING");
+                        request.setMessage("Hello Server");
                         break;
 
                     case "2":
                         System.out.print("Enter your message: ");
-                        String userMessage = scanner.nextLine();
-                        request = new Request("MESSAGE", userMessage);
+                        request.setAction("MESSAGE");
+                        request.setMessage(scanner.nextLine());
                         break;
 
                     case "3":
                         System.out.print("Enter username: ");
-                        String username = scanner.nextLine();
+                        request.setUsername(scanner.nextLine());
 
                         System.out.print("Enter password: ");
-                        String password = scanner.nextLine();
+                        request.setPassword(scanner.nextLine());
 
-                        request = new Request("LOGIN", username, password);
+                        request.setAction("LOGIN");
                         break;
 
                     case "4":
-                        request = new Request("GET_AUCTIONS", "fetch auctions");
+                        request.setAction("GET_AUCTIONS");
+                        request.setMessage("fetch auctions");
                         break;
 
                     case "5":
-                        request = new Request("EXIT", "Disconnect");
+                        System.out.print("Enter username: ");
+                        request.setUsername(scanner.nextLine());
+
+                        System.out.print("Enter auction id: ");
+                        request.setAuctionId(Integer.parseInt(scanner.nextLine()));
+
+                        System.out.print("Enter bid amount: ");
+                        request.setAmount(Double.parseDouble(scanner.nextLine()));
+
+                        request.setAction("PLACE_BID");
+                        break;
+
+                    case "6":
+                        request.setAction("EXIT");
+                        request.setMessage("Disconnect");
                         break;
 
                     default:
@@ -95,7 +111,7 @@ public class SocketClient {
                 System.out.println("Data    : " + response.getData());
                 System.out.println("---------------------------");
 
-                if ("5".equals(choice)) {
+                if ("6".equals(choice)) {
                     log("Client stopped.");
                     break;
                 }
@@ -103,6 +119,8 @@ public class SocketClient {
 
         } catch (IOException e) {
             log("Client error: " + e.getMessage());
+        } catch (Exception e) {
+            log("Input error: " + e.getMessage());
         }
     }
 

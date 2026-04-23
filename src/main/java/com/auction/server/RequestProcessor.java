@@ -34,6 +34,9 @@ public class RequestProcessor {
             case "GET_AUCTIONS":
                 return auctionController.getAuctions();
 
+            case "PLACE_BID":
+                return auctionController.placeBid(request);
+
             case "EXIT":
                 return new Response(true, "Goodbye! Disconnecting from server...", null);
 

@@ -5,19 +5,10 @@ public class Request {
     private String message;
     private String username;
     private String password;
+    private Integer auctionId;
+    private Double amount;
 
     public Request() {
-    }
-
-    public Request(String action, String message) {
-        this.action = action;
-        this.message = message;
-    }
-
-    public Request(String action, String username, String password) {
-        this.action = action;
-        this.username = username;
-        this.password = password;
     }
 
     public String getAction() {
@@ -52,6 +43,22 @@ public class Request {
         this.password = password;
     }
 
+    public Integer getAuctionId() {
+        return auctionId;
+    }
+
+    public void setAuctionId(Integer auctionId) {
+        this.auctionId = auctionId;
+    }
+
+    public Double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Double amount) {
+        this.amount = amount;
+    }
+
     @Override
     public String toString() {
         return "Request{" +
@@ -59,6 +66,8 @@ public class Request {
                 ", message='" + message + '\'' +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
+                ", auctionId=" + auctionId +
+                ", amount=" + amount +
                 '}';
     }
 }
