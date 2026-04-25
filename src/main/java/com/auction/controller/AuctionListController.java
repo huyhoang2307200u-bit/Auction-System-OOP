@@ -12,6 +12,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import java.util.List;
 import javafx.event.ActionEvent;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+
 
 public class AuctionListController {
 
@@ -21,9 +24,12 @@ public class AuctionListController {
     @FXML
     private TextField bidAmountField;
 
+    @FXML
+    private Button btnEndAuction;
+
     private final BidService bidService = new BidService();
     // Tạo tạm một user để demo, sau này có thể lấy từ màn hình Login
-    private final User currentUser = new User("user1", "Người dùng A");
+    private User currentUser = new User("user1", "Người dùng A", "USER");
 
     @FXML
     public void initialize() {
@@ -79,6 +85,24 @@ public class AuctionListController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    // Thêm Label vào controller
+    @FXML
+    private Label userInfoLabel;
+
+    // Hàm này sẽ được gọi từ LoginController để truyền dữ liệu qua
+    public void initData(User user) {
+        this.currentUser = user;
+        // Hiển thị tên và vai trò lên UI
+        userInfoLabel.setText("Xin chào: " + user.getName() + " | Quyền: " + user.getRole());
+
+        // Logic phân quyền: Chỉ ADMIN mới thấy nút kết thúc phiên
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
+        btnEndAuction.setVisible(isAdmin);
+        btnEndAuction.setManaged(isAdmin);
+
+        // Nâng cao: Chỉ Admin mới thấy nút kết thúc phiên (tùy chọn)
+        //btnEndAuction.setVisible("ADMIN".equalsIgnoreCase(user.getRole()));
     }
 
 }

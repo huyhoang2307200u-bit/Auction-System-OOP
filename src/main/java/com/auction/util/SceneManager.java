@@ -1,5 +1,7 @@
 package com.auction.util;
 
+import com.auction.controller.AuctionListController;
+import com.auction.model.User;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -33,6 +35,24 @@ public class SceneManager {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Không tìm thấy file FXML tại: /fxml/" + fxmlPath);
+        }
+    }
+    public static void switchSceneWithUser(Stage stage, String fxmlFile, String title, User user) {
+        try {
+            FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource("/fxml/" + fxmlFile));
+            Parent root = loader.load();
+
+            // Lấy controller của màn hình đích và gọi initData
+            Object controller = loader.getController();
+            if (controller instanceof AuctionListController) {
+                ((AuctionListController) controller).initData(user);
+            }
+
+            stage.setTitle(title);
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

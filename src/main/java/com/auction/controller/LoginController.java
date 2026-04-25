@@ -24,16 +24,17 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // 1. Kiểm tra đăng nhập qua AuctionManager
-        if (AuctionManager.getInstance().checkLogin(username, password)) {
-            System.out.println("Đăng nhập thành công!");
+        // 1. Kiểm tra và LẤY ĐỐI TƯỢNG USER từ hệ thống
+        User loggedInUser = AuctionManager.getInstance().authenticate(username, password);
 
-            // 2. Chuyển màn hình chuyên nghiệp bằng SceneManager
+        if (loggedInUser != null) {
+            // 2. Chuyển màn hình và TRUYỀN USER qua
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            SceneManager.switchScene(stage, "AuctionList.fxml", "Danh sách sản phẩm đấu giá");
+
+            // Gọi hàm mới (chúng ta sẽ tạo ở bước 2)
+            SceneManager.switchSceneWithUser(stage, "AuctionList.fxml", "Danh sách sản phẩm", loggedInUser);
 
         } else {
-            // 3. Thông báo lỗi chuyên nghiệp thay vì System.out
             showErrorAlert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu!");
         }
     }

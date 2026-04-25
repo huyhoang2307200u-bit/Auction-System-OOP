@@ -1,5 +1,7 @@
 package com.auction.service;
 
+import com.auction.model.Admin;
+import com.auction.model.Bidder;
 import com.auction.model.Item;
 import com.auction.model.User;
 import java.util.ArrayList;
@@ -56,5 +58,20 @@ public class AuctionManager {
                 }
             }
         }
+    }
+    public User authenticate(String username, String password) {
+        // 1. Tạo danh sách user giả lập (Sau này dùng Database thì xóa đoạn này đi)
+        List<User> userList = new ArrayList<>();
+        userList.add(new Admin(1, "Quản trị viên", "admin@gmail.com", "123", "ADMIN"));
+        userList.add(new Bidder(2, "Người đấu giá", "user@gmail.com", "123", "USER"));
+
+        // 2. Duyệt qua danh sách để tìm người dùng khớp với username và password
+        for (User u : userList) {
+            // Lưu ý: Tôi dùng email để làm username đăng nhập, bạn có thể thay bằng u.getUsername()
+            if (u.getEmail().equals(username) && u.getPassword().equals(password)) {
+                return u; // Tìm thấy thì trả về đối tượng user đầy đủ
+            }
+        }
+        return null; // Không tìm thấy
     }
 }
