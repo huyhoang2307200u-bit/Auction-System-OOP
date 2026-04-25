@@ -11,7 +11,12 @@ public class AuctionManager {
     private List<Item> items = new ArrayList<>();
 
     // BƯỚC 2: Để private constructor để không ai bên ngoài tự tạo mới được
-    private AuctionManager() {}
+    private AuctionManager() {
+        // Thêm dòng này để bảng có dữ liệu hiển thị
+        // Sửa dòng 16 và 17 trong AuctionManager.java thành:
+        items.add(new Item("SP01", "Đồng hồ cổ", "Mô tả sản phẩm", 500.0, 500.0));
+        items.add(new Item("SP02", "Tranh sơn dầu", "Mô tả sản phẩm", 1200.0, 1200.0));
+    }
 
     // BƯỚC 3: Hàm lấy đối tượng duy nhất (Nhóm yêu cầu)
     public static synchronized AuctionManager getInstance() {
@@ -24,6 +29,7 @@ public class AuctionManager {
     public List<Item> getAvailableItems() {
         return items;
     }
+
     // Thêm hàm này để kiểm tra tài khoản
     public boolean checkLogin(String username, String password) {
         // Tạm thời để admin/123, sau này nhóm sẽ thay bằng database
@@ -33,19 +39,21 @@ public class AuctionManager {
     // BƯỚC 4: Hàm đặt giá - Logic cực kỳ quan trọng
     public synchronized void placeBid(String itemId, double amount, User bidder) throws Exception {
         for (Item item : items) {
-            if (item.getId()) {
-                // KIỂM TRA LOGIC: Nếu giá đặt thấp hơn hoặc bằng giá hiện tại -> Báo lỗi
-                if (amount <= item.getCurrentPrice()) {
-                    throw new Exception("Giá đặt phải lớn hơn " + item.getCurrentPrice());
+            if (item.getId().equals(itemId)) {
+                {
+                    // KIỂM TRA LOGIC: Nếu giá đặt thấp hơn hoặc bằng giá hiện tại -> Báo lỗi
+                    if (amount <= item.getCurrentPrice()) {
+                        throw new Exception("Giá đặt phải lớn hơn " + item.getCurrentPrice());
+                    }
+
+                    // Nếu hợp lệ thì cập nhật giá mới
+                    item.setCurrentPrice(amount);
+
+                    // THÔNG BÁO CHO GUI (Observer)
+                    // Chỗ này bạn sẽ gọi hàm notify để màn hình của các bạn khác tự nhảy số
+                    System.out.println("Sản phẩm " + item.getName() + " vừa có giá mới: " + amount);
+                    return;
                 }
-                
-                // Nếu hợp lệ thì cập nhật giá mới
-                item.setCurrentPrice(amount);
-                
-                // THÔNG BÁO CHO GUI (Observer)
-                // Chỗ này bạn sẽ gọi hàm notify để màn hình của các bạn khác tự nhảy số
-                System.out.println("Sản phẩm " + item.getName() + " vừa có giá mới: " + amount);
-                return;
             }
         }
     }

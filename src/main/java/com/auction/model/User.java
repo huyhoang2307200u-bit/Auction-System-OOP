@@ -8,6 +8,11 @@ public class User {
 
     public User() {
     }
+    // Thêm constructor này vào class User.java
+    public User(String username, String name) {
+        this.name = name;
+        this.email = username; // Tạm thời dùng username làm email để khớp logic
+    }
 
     public User(int id, String name, String email, String password) {
         this.id = id;
