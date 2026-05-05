@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #f4f4f4;" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.controller.AddItemController" prefWidth="350">
+
+    <Label text="THÊM SẢN PHẨM ĐẤU GIÁ"
+           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+
+    <GridPane vgap="10" hgap="10">
+        <!-- Trường nhập Mã sản phẩm -->
+        <Label text="Mã sản phẩm (ID):" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="idField" promptText="VD: SP03" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <!-- Trường nhập Tên sản phẩm -->
+        <Label text="Tên sản phẩm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="nameField" promptText="Nhập tên sản phẩm..." GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <!-- Trường nhập Giá khởi điểm -->
+        <Label text="Giá khởi điểm:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="priceField" promptText="VD: 5000" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+        <Button text="Hủy" onAction="#handleCancel"
+                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-cursor: hand;"/>
+        <Button text="Thêm sản phẩm" onAction="#handleAdd"
+                style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+    </HBox>
+</VBox>

@@ -18,6 +18,7 @@ public class SceneManager {
      */
     public static void switchScene(Stage stage, String fxmlPath, String title) {
         try {
+
             // Lưu ý: Đảm bảo file FXML của bạn nằm trong thư mục /fxml/
             FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource("/fxml/" + fxmlPath));
             Parent root = loader.load();
@@ -39,19 +40,24 @@ public class SceneManager {
     }
     public static void switchSceneWithUser(Stage stage, String fxmlFile, String title, User user) {
         try {
+            System.out.println("Đang load file từ: " + SceneManager.class.getResource("/fxml/" + fxmlFile));
             FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource("/fxml/" + fxmlFile));
             Parent root = loader.load();
 
-            // Lấy controller của màn hình đích và gọi initData
-            Object controller = loader.getController();
-            if (controller instanceof AuctionListController) {
-                ((AuctionListController) controller).initData(user);
+            // 1. Kiểm tra loader có null không
+            AuctionListController controller = loader.getController();
+            if (controller == null) {
+                throw new IOException("Không thể lấy được Controller từ FXML!");
             }
+
+            // 2. Truyền dữ liệu
+            controller.initData(user);
 
             stage.setTitle(title);
             stage.setScene(new Scene(root));
             stage.show();
         } catch (IOException e) {
+            // In ra lỗi chi tiết để xem tại sao nó load fail
             e.printStackTrace();
         }
     }
