@@ -2,31 +2,31 @@ package com.auction.server.controller;
 
 import com.auction.common.Request;
 import com.auction.common.Response;
-import com.auction.server.service.AuthService;
 
 public class AuthController {
-    private final AuthService authService;
-
-    public AuthController() {
-        this.authService = new AuthService();
-    }
 
     public Response login(Request request) {
         String username = request.getUsername();
         String password = request.getPassword();
 
-        if (username == null || username.isBlank() ||
-                password == null || password.isBlank()) {
-            return new Response(false, "Username or password cannot be empty.", null);
+        if (username == null || username.trim().isEmpty()) {
+            return new Response(false, "Tên đăng nhập không được để trống.", null);
         }
 
-        boolean isAuthenticated = authService.authenticate(username, password);
-
-        if (isAuthenticated) {
-            String role = authService.getUserRole(username);
-            return new Response(true, "Login successful.", "Welcome " + username + " | Role: " + role);
-        } else {
-            return new Response(false, "Invalid username or password.", null);
+        if (password == null || password.trim().isEmpty()) {
+            return new Response(false, "Mật khẩu không được để trống.", null);
         }
+
+        if (username.equals("admin") && password.equals("123456")) {
+            String role = "ADMIN";
+
+            return new Response(
+                    true,
+                    "Đăng nhập thành công.",
+                    "Xin chào " + username + " | Vai trò: " + role
+            );
+        }
+
+        return new Response(false, "Tên đăng nhập hoặc mật khẩu không đúng.", null);
     }
 }

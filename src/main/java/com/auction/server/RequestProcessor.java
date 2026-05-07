@@ -1,6 +1,7 @@
 package com.auction.server;
 
 import com.auction.common.Request;
+import com.auction.common.RequestType;
 import com.auction.common.Response;
 import com.auction.server.controller.AuctionController;
 import com.auction.server.controller.AuthController;
@@ -15,33 +16,33 @@ public class RequestProcessor {
     }
 
     public Response process(Request request) {
-        if (request == null || request.getAction() == null) {
-            return new Response(false, "Invalid request.", null);
+        if (request == null || request.getType() == null) {
+            return new Response(false, "Yêu cầu không hợp lệ.", null);
         }
 
-        String action = request.getAction().trim().toUpperCase();
+        RequestType type = request.getType();
 
-        switch (action) {
-            case "PING":
-                return new Response(true, "PONG from server", "Server is alive");
+        switch (type) {
+            case PING:
+                return new Response(true, "Server đã phản hồi PING.", "Server đang hoạt động.");
 
-            case "MESSAGE":
-                return new Response(true, "Message received successfully.", request.getMessage());
+            case MESSAGE:
+                return new Response(true, "Server đã nhận tin nhắn.", request.getMessage());
 
-            case "LOGIN":
+            case LOGIN:
                 return authController.login(request);
 
-            case "GET_AUCTIONS":
+            case GET_AUCTIONS:
                 return auctionController.getAuctions();
 
-            case "PLACE_BID":
+            case PLACE_BID:
                 return auctionController.placeBid(request);
 
-            case "EXIT":
-                return new Response(true, "Goodbye! Disconnecting from server...", null);
+            case EXIT:
+                return new Response(true, "Tạm biệt! Đang ngắt kết nối với server...", null);
 
             default:
-                return new Response(false, "Unknown action: " + action, null);
+                return new Response(false, "Loại yêu cầu chưa được hỗ trợ: " + type, null);
         }
     }
 }

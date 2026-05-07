@@ -1,7 +1,7 @@
 package com.auction.common;
 
 public class Request {
-    private String action;
+    private RequestType type;
     private String message;
     private String username;
     private String password;
@@ -11,12 +11,12 @@ public class Request {
     public Request() {
     }
 
-    public String getAction() {
-        return action;
+    public RequestType getType() {
+        return type;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setType(RequestType type) {
+        this.type = type;
     }
 
     public String getMessage() {
@@ -62,7 +62,7 @@ public class Request {
     @Override
     public String toString() {
         return "Request{" +
-                "action='" + action + '\'' +
+                "type=" + type +
                 ", message='" + message + '\'' +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +

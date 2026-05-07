@@ -1,6 +1,7 @@
 package com.auction.client;
 
 import com.auction.common.Request;
+import com.auction.common.RequestType;
 import com.auction.common.Response;
 import com.google.gson.Gson;
 
@@ -9,127 +10,182 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class SocketClient {
-    private static final String HOST = "localhost";
-    private static final int PORT = 9999;
+    private static final String SERVER_HOST = "localhost";
+    private static final int SERVER_PORT = 12345;
 
-    public static void main(String[] args) {
-        Gson gson = new Gson();
+    private final Gson gson;
+    private Socket socket;
+    private BufferedReader reader;
+    private PrintWriter writer;
 
-        System.out.println("========================================");
-        System.out.println("         AUCTION CLIENT STARTING        ");
-        System.out.println("========================================");
+    public SocketClient() {
+        this.gson = new Gson();
+    }
 
-        try (
-                Socket socket = new Socket(HOST, PORT);
-                BufferedReader input = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream())
-                );
-                PrintWriter output = new PrintWriter(socket.getOutputStream(), true);
-                Scanner scanner = new Scanner(System.in)
-        ) {
-            log("Connected to server " + HOST + ":" + PORT);
+    public void connect() throws IOException {
+        socket = new Socket(SERVER_HOST, SERVER_PORT);
 
-            while (true) {
-                System.out.println("\n===== MENU =====");
-                System.out.println("1. Send PING");
-                System.out.println("2. Send MESSAGE");
-                System.out.println("3. LOGIN");
-                System.out.println("4. GET_AUCTIONS");
-                System.out.println("5. PLACE_BID");
-                System.out.println("6. EXIT");
-                System.out.print("Choose: ");
+        reader = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+        );
 
-                String choice = scanner.nextLine();
-                Request request = new Request();
+        writer = new PrintWriter(socket.getOutputStream(), true);
 
+        System.out.println("Đã kết nối tới server: " + SERVER_HOST + ":" + SERVER_PORT);
+    }
+
+    public Response sendRequest(Request request) throws IOException {
+        String jsonRequest = gson.toJson(request);
+        writer.println(jsonRequest);
+
+        String jsonResponse = reader.readLine();
+
+        if (jsonResponse == null) {
+            return new Response(false, "Server đã ngắt kết nối.", null);
+        }
+
+        return gson.fromJson(jsonResponse, Response.class);
+    }
+
+    public void startConsole() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            printMenu();
+
+            System.out.print("Chọn chức năng: ");
+            String choice = scanner.nextLine();
+
+            Request request = new Request();
+
+            try {
                 switch (choice) {
                     case "1":
-                        request.setAction("PING");
-                        request.setMessage("Hello Server");
+                        request.setType(RequestType.PING);
                         break;
 
                     case "2":
-                        System.out.print("Enter your message: ");
-                        request.setAction("MESSAGE");
+                        System.out.print("Nhập tin nhắn của bạn: ");
+                        request.setType(RequestType.MESSAGE);
                         request.setMessage(scanner.nextLine());
                         break;
 
                     case "3":
-                        System.out.print("Enter username: ");
+                        System.out.print("Nhập tên đăng nhập: ");
                         request.setUsername(scanner.nextLine());
 
-                        System.out.print("Enter password: ");
+                        System.out.print("Nhập mật khẩu: ");
                         request.setPassword(scanner.nextLine());
 
-                        request.setAction("LOGIN");
+                        request.setType(RequestType.LOGIN);
                         break;
 
                     case "4":
-                        request.setAction("GET_AUCTIONS");
-                        request.setMessage("fetch auctions");
+                        request.setType(RequestType.GET_AUCTIONS);
                         break;
 
                     case "5":
-                        System.out.print("Enter username: ");
-                        request.setUsername(scanner.nextLine());
-
-                        System.out.print("Enter auction id: ");
+                        System.out.print("Nhập mã phiên đấu giá: ");
                         request.setAuctionId(Integer.parseInt(scanner.nextLine()));
 
-                        System.out.print("Enter bid amount: ");
+                        System.out.print("Nhập số tiền muốn đặt giá: ");
                         request.setAmount(Double.parseDouble(scanner.nextLine()));
 
-                        request.setAction("PLACE_BID");
+                        request.setType(RequestType.PLACE_BID);
                         break;
 
-                    case "6":
-                        request.setAction("EXIT");
-                        request.setMessage("Disconnect");
+                    case "0":
+                        request.setType(RequestType.EXIT);
                         break;
 
                     default:
-                        System.out.println("Invalid choice.");
+                        System.out.println("Lựa chọn không hợp lệ. Vui lòng thử lại.");
                         continue;
                 }
 
-                String requestJson = gson.toJson(request);
-                output.println(requestJson);
+                Response response = sendRequest(request);
+                printResponse(response);
 
-                log("Sent JSON: " + requestJson);
-
-                String responseJson = input.readLine();
-                Response response = gson.fromJson(responseJson, Response.class);
-
-                System.out.println("\n----- SERVER RESPONSE -----");
-                System.out.println("Success : " + response.isSuccess());
-                System.out.println("Message : " + response.getMessage());
-                System.out.println("Data    : " + response.getData());
-                System.out.println("---------------------------");
-
-                if ("6".equals(choice)) {
-                    log("Client stopped.");
+                if (request.getType() == RequestType.EXIT) {
                     break;
                 }
+
+            } catch (NumberFormatException e) {
+                System.out.println("Định dạng số không hợp lệ. Vui lòng nhập một số hợp lệ.");
+            } catch (IOException e) {
+                System.out.println("Lỗi kết nối: " + e.getMessage());
+                break;
+            } catch (Exception e) {
+                System.out.println("Đã xảy ra lỗi không mong muốn: " + e.getMessage());
+            }
+        }
+
+        close();
+        scanner.close();
+    }
+
+    private void printMenu() {
+        System.out.println();
+        System.out.println("========== CLIENT ĐẤU GIÁ ==========");
+        System.out.println("1. Kiểm tra kết nối tới server");
+        System.out.println("2. Gửi tin nhắn");
+        System.out.println("3. Đăng nhập");
+        System.out.println("4. Xem danh sách phiên đấu giá");
+        System.out.println("5. Đặt giá");
+        System.out.println("0. Thoát");
+        System.out.println("====================================");
+    }
+
+    private void printResponse(Response response) {
+        if (response == null) {
+            System.out.println("Không nhận được phản hồi từ server.");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("---------- PHẢN HỒI TỪ SERVER ----------");
+        System.out.println("Thành công: " + response.isSuccess());
+        System.out.println("Thông báo: " + response.getMessage());
+
+        if (response.getData() != null) {
+            System.out.println("Dữ liệu: " + response.getData());
+        }
+
+        System.out.println("----------------------------------------");
+    }
+
+    public void close() {
+        try {
+            if (reader != null) {
+                reader.close();
             }
 
+            if (writer != null) {
+                writer.close();
+            }
+
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+
+            System.out.println("Client đã ngắt kết nối.");
+
         } catch (IOException e) {
-            log("Client error: " + e.getMessage());
-        } catch (Exception e) {
-            log("Input error: " + e.getMessage());
+            System.out.println("Lỗi khi đóng client: " + e.getMessage());
         }
     }
 
-    private static void log(String message) {
-        System.out.println("[" + getCurrentTime() + "] [CLIENT] " + message);
-    }
+    public static void main(String[] args) {
+        SocketClient client = new SocketClient();
 
-    private static String getCurrentTime() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.now().format(formatter);
+        try {
+            client.connect();
+            client.startConsole();
+        } catch (IOException e) {
+            System.out.println("Không thể kết nối tới server: " + e.getMessage());
+        }
     }
 }
