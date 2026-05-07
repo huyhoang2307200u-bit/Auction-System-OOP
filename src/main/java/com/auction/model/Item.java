@@ -1,69 +1,59 @@
-package com.auction.model;
+package com.example.auction.model;
 
-public class Item {
-    private int id;
-    private String name;
+import java.math.BigDecimal;
+
+public abstract class Item extends Entity {
+    private static final long serialVersionUID = 1L;
+
+    private String sellerId;
+    private String title;
     private String description;
-    private double startingPrice;
-    private double currentPrice;
+    private BigDecimal startingPrice;
+    private ItemCategory category;
+    private String imageDataUrl;
 
-    public Item() {
+    protected Item() {
+        super();
     }
 
-    public Item(int id, String name, String description, double startingPrice, double currentPrice) {
-        this.id = id;
-        this.name = name;
+    protected Item(String sellerId, String title, String description,
+            BigDecimal startingPrice, ItemCategory category) {
+        super();
+        this.sellerId = sellerId;
+        this.title = title;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.currentPrice = currentPrice;
-    }
-    public int getId() {
-        return id;
+        this.category = category;
+        this.imageDataUrl = "";
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public abstract String printInfo();
+
+    public String getSellerId() {
+        return sellerId;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getTitle() {
+        return title;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public double getStartingPrice() {
+    public BigDecimal getStartingPrice() {
         return startingPrice;
     }
 
-    public void setStartingPrice(double startingPrice) {
-        this.startingPrice = startingPrice;
+    public ItemCategory getCategory() {
+        return category;
     }
 
-    public double getCurrentPrice() {
-        return currentPrice;
+    public String getImageDataUrl() {
+        return imageDataUrl;
     }
 
-    public void setCurrentPrice(double currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-    @Override
-    public String toString() {
-        return "Item{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", startingPrice=" + startingPrice +
-                ", currentPrice=" + currentPrice +
-                '}';
+    public void setImageDataUrl(String imageDataUrl) {
+        this.imageDataUrl = imageDataUrl == null ? "" : imageDataUrl;
     }
 }

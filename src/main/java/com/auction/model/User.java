@@ -1,57 +1,50 @@
 package com.auction.model;
 
-public class User {
-    protected int id;
-    protected String name;
-    protected String email;
-    protected String password;
+public abstract class User extends Entity {
+    private static final long serialVersionUID = 1L;
 
-    public User() {
-    }
+    private String username;
+    private String displayName;
+    private String passwordSalt;
+    private String passwordHash;
+    private Role role;
 
-    public User(int id, String name, String email, String password) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-    }
-    public int getId() {
-        return id;
+    protected User() {
+        super();
     }
 
-    public void setId(int id) {
-        this.id = id;
+    protected User(String username, String displayName, String passwordSalt, String passwordHash, Role role) {
+        super();
+        this.username = username;
+        this.displayName = displayName;
+        this.passwordSalt = passwordSalt;
+        this.passwordHash = passwordHash;
+        this.role = role;
     }
 
-    public String getName() {
-        return name;
+    public abstract String dashboardTitle();
+
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public String getEmail() {
-        return email;
+    public String getPasswordSalt() {
+        return passwordSalt;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public String getPassword() {
-        return password;
+    public Role getRole() {
+        return role;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                '}';
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
     }
 }
