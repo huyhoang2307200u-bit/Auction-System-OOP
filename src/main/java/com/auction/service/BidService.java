@@ -1,5 +1,7 @@
 package com.auction.service;
 
+import com.auction.dao.ItemDAO;
+import com.auction.dao.TransactionDAO; // Thêm DAO mới
 import com.auction.model.Item;
 import com.auction.model.User;
 import com.auction.model.Bidder;
@@ -8,32 +10,43 @@ import java.time.LocalDateTime;
 
 public class BidService {
 
+    // Khởi tạo các thành phần truy xuất dữ liệu
+    private final ItemDAO itemDAO = new ItemDAO();
+    private final TransactionDAO transactionDAO = new TransactionDAO();
+
+    /**
+     * Xử lý logic đặt giá và lưu vết giao dịch
+     */
     public boolean placeBid(Item item, User user, double amount) {
-        // 1. Kiểm tra phiên đã kết thúc chưa
-        if (!item.isAuctionActive()) return false;
+        // 1. Xác thực trạng thái hoạt động của phiên đấu giá
+        if (!item.isAuctionActive()) {
+            System.out.println(">>> Thông báo: Phiên đấu giá đã đóng.");
+            return false;
+        }
 
-        // 2. Kiểm tra giá đặt phải cao hơn giá hiện tại
-        if (amount <= item.getCurrentPrice()) return false;
+        // 2. Kiểm tra tính hợp lệ của giá đặt mới (phải cao hơn giá hiện hành)
+        if (amount <= item.getCurrentPrice()) {
+            System.out.println(">>> Thông báo: Giá đặt phải cao hơn giá hiện tại.");
+            return false;
+        }
 
-        // 3. Cập nhật giá và ghi nhật ký
+        // 3. Tiến hành cập nhật đồng bộ để tránh xung đột dữ liệu khi nhiều người cùng đặt giá
         synchronized(item) {
-            item.setCurrentPrice(amount);
-            item.setHighestBidderName(user.getName());
-
             try {
-                // CHỈNH SỬA TẠI ĐÂY:
-                // Nếu user không phải Bidder (như Admin), chúng ta vẫn thực hiện ghi log
-                // nhưng xử lý ép kiểu cẩn thận.
+                // A. CẬP NHẬT TRẠNG THÁI SẢN PHẨM TRÊN CƠ SỞ DỮ LIỆU
+                itemDAO.updatePrice(item.getId(), amount);
 
-                Bidder bidderForLog = null;
+                // B. CẬP NHẬT THÔNG TIN TRÊN BỘ NHỚ TẠM (RAM) ĐỂ HIỂN THỊ GIAO DIỆN
+                item.setCurrentPrice(amount);
+                item.setHighestBidderName(user.getName());
+
+                // C. LƯU LẠI LỊCH SỬ GIAO DỊCH VÀO DATABASE (Vĩnh viễn)
+                // Lưu ID người dùng, ID sản phẩm và số tiền đặt
+                transactionDAO.saveTransaction(user.getId(), Integer.parseInt(item.getId()), amount);
+
+                // D. GHI LOG CHO TransactionManager (Để hỗ trợ các tính năng liệt kê nhanh)
                 if (user instanceof Bidder) {
-                    bidderForLog = (Bidder) user;
-                }
-
-                // Tạo giao dịch mới
-                // Nếu dự án của bạn lớp BidTransaction cho phép Bidder bị null (trong trường hợp Admin đấu giá)
-                // Hoặc bạn chỉ cần ghi log khi người đó là Bidder thật sự.
-                if (bidderForLog != null) {
+                    Bidder bidderForLog = (Bidder) user;
                     BidTransaction newTrans = new BidTransaction(
                             (int) (System.currentTimeMillis() / 1000),
                             bidderForLog,
@@ -42,17 +55,16 @@ public class BidService {
                             LocalDateTime.now()
                     );
                     TransactionManager.getInstance().addTransaction(newTrans);
-                    System.out.println(" Đã ghi log giao dịch!");
-                } else {
-                    // Nếu là Admin, bạn có thể tạo một đối tượng Bidder mặc định
-                    // mà không cần truyền tham số nếu Constructor 2 tham số chưa tồn tại
-                    System.out.println("User không phải Bidder, không ghi log vào bảng lịch sử người dùng.");
                 }
 
+                System.out.println(">>> Giao dịch thành công: Sản phẩm ID " + item.getId() + " đạt mức giá " + amount);
+                return true;
+
             } catch (Exception e) {
+                System.err.println(">>> Lỗi hệ thống khi xử lý đặt giá: " + e.getMessage());
                 e.printStackTrace();
+                return false;
             }
         }
-        return true;
     }
 }

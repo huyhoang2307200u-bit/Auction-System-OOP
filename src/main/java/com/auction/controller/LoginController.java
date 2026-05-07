@@ -2,14 +2,12 @@ package com.auction.controller;
 
 import com.auction.model.User;
 import com.auction.service.AuctionManager;
-import com.auction.util.SceneManager; // Import SceneManager mới tạo
+import com.auction.util.SceneManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 public class LoginController {
 
@@ -24,16 +22,13 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // 1. Kiểm tra và LẤY ĐỐI TƯỢNG USER từ hệ thống
+        // 1. Kiểm tra xác thực từ Database thông qua AuctionManager
         User loggedInUser = AuctionManager.getInstance().authenticate(username, password);
 
         if (loggedInUser != null) {
-            // 2. Chuyển màn hình và TRUYỀN USER qua
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            // Gọi hàm mới (chúng ta sẽ tạo ở bước 2)
-            SceneManager.switchSceneWithUser(stage, "AuctionList.fxml", "Danh sách sản phẩm", loggedInUser);
-
+            // 2. Đăng nhập thành công -> Chuyển sang màn hình đấu giá và truyền dữ liệu User
+            // Sử dụng hàm switchSceneWithUser đã tối ưu trong SceneManager
+            SceneManager.switchSceneWithUser("AuctionList.fxml", loggedInUser);
         } else {
             showErrorAlert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu!");
         }
@@ -41,13 +36,19 @@ public class LoginController {
 
     @FXML
     public void handleRegister(ActionEvent event) {
-        // Tương tự, sau này bạn có thể dùng SceneManager.switchScene(...) ở đây
-        System.out.println("Chuyển sang màn hình Đăng ký...");
+        // Chuyển sang màn hình đăng ký
+        // Lưu ý: Chỉ cần truyền "Register.fxml", SceneManager sẽ tự xử lý đường dẫn /fxml/
+        SceneManager.switchScene("Register.fxml");
     }
 
     @FXML
     public void handleForgotPassword(ActionEvent event) {
-        System.out.println("Mở màn hình Quên mật khẩu...");
+        // Có thể hiển thị thông báo tạm thời cho tính năng này
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông báo");
+        alert.setHeaderText(null);
+        alert.setContentText("Tính năng Quên mật khẩu đang được phát triển!");
+        alert.showAndWait();
     }
 
     // Hàm tiện ích để hiển thị lỗi

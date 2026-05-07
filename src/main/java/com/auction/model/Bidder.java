@@ -1,12 +1,10 @@
 package com.auction.model;
 
 public class Bidder extends User {
-    public Bidder() {
-        super();
-    }
+    public Bidder() { super(); }
 
-    // Truyền thêm "BIDDER" vào làm tham số thứ 5 cho super
     public Bidder(int id, String name, String email, String password, String role) {
-        super(id, name, email, password, "BIDDER");
+        // Truyền biến role nhận được lên lớp cha User
+        super(id, name, email, password, role);
     }
 }

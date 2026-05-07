@@ -1,8 +1,10 @@
 package com.auction.model;
 
+import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
+
 import java.time.LocalDateTime;
 
-// Chuyển thành abstract class để áp dụng tính trừu tượng
 public abstract class Item {
     protected String id;
     protected String name;
@@ -14,7 +16,7 @@ public abstract class Item {
     protected boolean isAuctionActive = true;
     protected String highestBidderName = "Chưa có";
 
-    // Constructor chung cho các lớp con gọi qua super()
+    // Constructor chung giữ nguyên tham số của bạn
     public Item(String id, String name, String description, double startingPrice, double currentPrice) {
         this.id = id;
         this.name = name;
@@ -24,10 +26,32 @@ public abstract class Item {
         this.isAuctionActive = true;
     }
 
-    // Phương thức trừu tượng để thực hiện tính đa hình
+    public javafx.beans.property.StringProperty idProperty() {
+        return new javafx.beans.property.SimpleStringProperty(id);
+    }
+
+    public javafx.beans.property.StringProperty nameProperty() {
+        return new javafx.beans.property.SimpleStringProperty(name);
+    }
+
+    public javafx.beans.property.DoubleProperty currentPriceProperty() {
+        return new javafx.beans.property.SimpleDoubleProperty(currentPrice);
+    }
+
+    public javafx.beans.property.StringProperty statusProperty() {
+        return new javafx.beans.property.SimpleStringProperty(getStatus());
+    }
+
+    public javafx.beans.property.StringProperty highestBidderProperty() {
+        return new javafx.beans.property.SimpleStringProperty(highestBidderName);
+    }
+
+
+
+    // --- KẾT THÚC PHẦN BỔ SUNG ---
+
     public abstract String getItemType();
 
-    // Các Getter và Setter giữ nguyên để đảm bảo tính đóng gói (Encapsulation)[cite: 1]
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getName() { return name; }
@@ -47,4 +71,6 @@ public abstract class Item {
     public String getStatus() { return isAuctionActive ? "Đang đấu giá" : "Đã kết thúc"; }
     public String getHighestBidderName() { return highestBidderName; }
     public void setHighestBidderName(String name) { this.highestBidderName = name; }
+
+
 }
