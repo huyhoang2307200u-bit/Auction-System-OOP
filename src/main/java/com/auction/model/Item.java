@@ -1,4 +1,4 @@
-package com.example.auction.model;
+package com.auction.model;
 
 import java.math.BigDecimal;
 

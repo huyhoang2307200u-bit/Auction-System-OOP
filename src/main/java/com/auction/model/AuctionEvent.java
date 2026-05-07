@@ -1,6 +1,6 @@
 package com.auction.model;
 
-import com.example.auction.dto.AuctionDetailDto;
+import com.auction.dto.AuctionDetailDto;
 import java.time.LocalDateTime;
 
 public class AuctionEvent {
