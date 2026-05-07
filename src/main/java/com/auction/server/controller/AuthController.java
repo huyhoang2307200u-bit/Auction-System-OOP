@@ -29,4 +29,23 @@ public class AuthController {
             return new Response(false, "Invalid username or password.", null);
         }
     }
+    public Response register(Request request) {
+        String username = request.getUsername();
+        String password = request.getPassword();
+        String role = request.getRole();
+
+        if (username == null || username.isBlank()
+                || password == null || password.isBlank()
+                || role == null || role.isBlank()) {
+            return new Response(false, "Tên đăng nhập, mật khẩu và vai trò không được để trống.", null);
+        }
+
+        boolean success = authService.register(username, password, role);
+
+        if (success) {
+            return new Response(true, "Đăng ký thành công.", null);
+        }
+
+        return new Response(false, "Đăng ký thất bại. Tên đăng nhập có thể đã tồn tại.", null);
+    }
 }

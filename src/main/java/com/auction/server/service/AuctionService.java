@@ -59,4 +59,5 @@ public class AuctionService {
                 bidResult.getCurrentPrice()
         );
     }
+
 }
