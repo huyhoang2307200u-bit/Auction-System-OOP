@@ -8,8 +8,8 @@ public final class ItemFactory {
     }
 
     public static Item create(ItemCategory category, String sellerId, String title, String description,
-            BigDecimal startingPrice, String brand, Integer warrantyMonths,
-            String artist, String material, String manufacturer, Integer year) {
+                              BigDecimal startingPrice, String brand, Integer warrantyMonths,
+                              String artist, String material, String manufacturer, Integer year) {
         BigDecimal normalizedPrice = MoneyUtil.normalize(startingPrice);
         return switch (category) {
             case ELECTRONICS -> new Electronics(
@@ -34,6 +34,29 @@ public final class ItemFactory {
                     emptyToDefault(manufacturer, "Unknown manufacturer"),
                     year == null ? 0 : year);
         };
+    }
+
+    // Hàm tương thích với code GUI cũ: ItemFactory.createItem("ELECTRONICS", id, name, price)
+    public static Item createItem(String categoryName, String sellerId, String title, double startingPrice) {
+        ItemCategory category;
+        try {
+            category = ItemCategory.valueOf(categoryName.trim().toUpperCase());
+        } catch (Exception e) {
+            category = ItemCategory.ELECTRONICS;
+        }
+        return create(
+                category,
+                sellerId,
+                title,
+                "",
+                MoneyUtil.fromDouble(startingPrice),
+                "Generic",
+                0,
+                "Unknown artist",
+                "Unknown material",
+                "Unknown manufacturer",
+                0
+        );
     }
 
     private static String emptyToDefault(String value, String defaultValue) {

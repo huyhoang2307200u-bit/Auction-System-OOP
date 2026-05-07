@@ -11,8 +11,12 @@ public class Bidder extends User {
         super(username, displayName, passwordSalt, passwordHash, Role.BIDDER);
     }
 
+    public Bidder(int id, String name, String username, String password, String roleName) {
+        super(id, name, username, password, roleName, Role.BIDDER);
+    }
+
     @Override
     public String dashboardTitle() {
-        return "Bidder Dashboard";
+        return "Bảng điều khiển người đấu giá";
     }
 }

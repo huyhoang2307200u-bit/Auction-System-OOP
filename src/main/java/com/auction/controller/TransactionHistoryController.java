@@ -19,7 +19,7 @@ public class TransactionHistoryController {
     @FXML
     public void initialize() {
         // Ánh xạ dữ liệu từ model vào bảng
-        colId.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getId()).asObject());
+        colId.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getNumericId()).asObject());
         colBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getBidderName()));
         colItem.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItemName()));
         colAmount.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getBidAmount()).asObject());

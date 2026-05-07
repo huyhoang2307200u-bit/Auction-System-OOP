@@ -11,8 +11,12 @@ public class Seller extends User {
         super(username, displayName, passwordSalt, passwordHash, Role.SELLER);
     }
 
+    public Seller(int id, String name, String username, String password, String roleName) {
+        super(id, name, username, password, roleName, Role.SELLER);
+    }
+
     @Override
     public String dashboardTitle() {
-        return "Seller Dashboard";
+        return "Bảng điều khiển người bán";
     }
 }

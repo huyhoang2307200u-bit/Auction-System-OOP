@@ -22,6 +22,15 @@ public abstract class User extends Entity {
         this.role = role;
     }
 
+    protected User(int ignoredId, String displayName, String username, String password, String ignoredRoleName, Role role) {
+        super();
+        this.username = username;
+        this.displayName = displayName;
+        this.passwordSalt = "";
+        this.passwordHash = password;
+        this.role = role;
+    }
+
     public abstract String dashboardTitle();
 
     public String getUsername() {
@@ -30,6 +39,14 @@ public abstract class User extends Entity {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getName() {
+        return displayName;
+    }
+
+    public String getPassword() {
+        return passwordHash;
     }
 
     public String getPasswordSalt() {

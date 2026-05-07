@@ -11,8 +11,12 @@ public class Admin extends User {
         super(username, displayName, passwordSalt, passwordHash, Role.ADMIN);
     }
 
+    public Admin(int id, String name, String username, String password, String roleName) {
+        super(id, name, username, password, roleName, Role.ADMIN);
+    }
+
     @Override
     public String dashboardTitle() {
-        return "Admin Dashboard";
+        return "Bảng điều khiển quản trị viên";
     }
 }
