@@ -1,22 +1,26 @@
 package com.auction.common;
 
 public class Request {
-    private String action;
+    private RequestType type;
+
     private String message;
+
     private String username;
     private String password;
+    private String role;
+
     private Integer auctionId;
     private Double amount;
 
     public Request() {
     }
 
-    public String getAction() {
-        return action;
+    public RequestType getType() {
+        return type;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setType(RequestType type) {
+        this.type = type;
     }
 
     public String getMessage() {
@@ -43,6 +47,14 @@ public class Request {
         this.password = password;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public Integer getAuctionId() {
         return auctionId;
     }
@@ -62,10 +74,11 @@ public class Request {
     @Override
     public String toString() {
         return "Request{" +
-                "action='" + action + '\'' +
+                "type=" + type +
                 ", message='" + message + '\'' +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
                 ", auctionId=" + auctionId +
                 ", amount=" + amount +
                 '}';

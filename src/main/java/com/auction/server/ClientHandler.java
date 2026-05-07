@@ -1,6 +1,7 @@
 package com.auction.server;
 
 import com.auction.common.Request;
+import com.auction.common.RequestType;
 import com.auction.common.Response;
 import com.google.gson.Gson;
 
@@ -28,7 +29,7 @@ public class ClientHandler implements Runnable {
         String clientInfo = clientSocket.getInetAddress().getHostAddress()
                 + ":" + clientSocket.getPort();
 
-        log(clientInfo, "Client handler started.");
+        log(clientInfo, "Bắt đầu xử lý client.");
 
         try (
                 BufferedReader input = new BufferedReader(
@@ -39,37 +40,44 @@ public class ClientHandler implements Runnable {
             String rawJson;
 
             while ((rawJson = input.readLine()) != null) {
-                log(clientInfo, "Raw JSON received: " + rawJson);
+                log(clientInfo, "JSON nhận được: " + rawJson);
 
+                Request request = null;
                 Response response;
 
                 try {
-                    Request request = gson.fromJson(rawJson, Request.class);
+                    request = gson.fromJson(rawJson, Request.class);
                     response = requestProcessor.process(request);
-
                 } catch (Exception e) {
-                    response = new Response(false, "JSON parse error: " + e.getMessage(), null);
+                    response = new Response(false, "Lỗi xử lý yêu cầu: " + e.getMessage(), null);
                 }
 
                 String responseJson = gson.toJson(response);
                 output.println(responseJson);
 
-                log(clientInfo, "Response sent: " + responseJson);
+                log(clientInfo, "Phản hồi đã gửi: " + responseJson);
 
-                if ("Goodbye! Disconnecting from server...".equals(response.getMessage())) {
+                if (request != null && request.getType() == RequestType.EXIT) {
                     break;
                 }
             }
 
         } catch (IOException e) {
-            log(clientInfo, "Connection error: " + e.getMessage());
+            log(clientInfo, "Lỗi kết nối: " + e.getMessage());
         } finally {
-            try {
+            closeSocket(clientInfo);
+        }
+    }
+
+    private void closeSocket(String clientInfo) {
+        try {
+            if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
-                log(clientInfo, "Connection closed.");
-            } catch (IOException e) {
-                log(clientInfo, "Failed to close socket: " + e.getMessage());
             }
+
+            log(clientInfo, "Đã đóng kết nối.");
+        } catch (IOException e) {
+            log(clientInfo, "Không thể đóng socket: " + e.getMessage());
         }
     }
 
