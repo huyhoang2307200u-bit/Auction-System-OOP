@@ -1,42 +1,34 @@
 package com.auction.model;
 
+import java.math.BigDecimal;
+
 public class Vehicle extends Item {
-    private String brand;
+    private static final long serialVersionUID = 1L;
+
+    private String manufacturer;
     private int year;
 
-    // 1. Constructor Đầy Đủ: Truyền 5 tham số cho Item và 2 tham số riêng của Vehicle
-    public Vehicle(int id, String name, String description, double startingPrice, double currentPrice, String brand, int year) {
-        // Gọi constructor 5 tham số của Item
-        super(id, name, description, startingPrice, currentPrice);
-        this.brand = brand;
+    public Vehicle() {
+        super();
+    }
+
+    public Vehicle(String sellerId, String title, String description, BigDecimal startingPrice,
+            String manufacturer, int year) {
+        super(sellerId, title, description, startingPrice, ItemCategory.VEHICLE);
+        this.manufacturer = manufacturer;
         this.year = year;
     }
 
-    // 2. Constructor Rút Gọn: Dùng khi bạn muốn khởi tạo nhanh
-    public Vehicle(String name, double startingPrice, String brand, int year) {
-        super(); // Gọi constructor mặc định Item()
-        this.setName(name);
-        this.setStartingPrice(startingPrice);
-        this.setCurrentPrice(startingPrice);
-        this.brand = brand;
-        this.year = year;
-    }
-
-    // Getter và Setter
-    public String getBrand() { return brand; }
-    public void setBrand(String brand) { this.brand = brand; }
-    public int getYear() { return year; }
-    public void setYear(int year) { this.year = year; }
-
-    // 3. Ghi đè toString() để đồng bộ với cấu trúc dự án của nhóm
     @Override
-    public String toString() {
-        return "Vehicle{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", brand='" + brand + '\'' +
-                ", year=" + year +
-                ", currentPrice=" + getCurrentPrice() +
-                '}';
+    public String printInfo() {
+        return getTitle() + " - " + manufacturer + " " + year;
+    }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public int getYear() {
+        return year;
     }
 }

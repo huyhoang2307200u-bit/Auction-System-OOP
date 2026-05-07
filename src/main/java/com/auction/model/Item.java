@@ -1,50 +1,59 @@
-package com.auction.model;
+package com.example.auction.model;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
-// Chuyển thành abstract class để áp dụng tính trừu tượng
-public abstract class Item {
-    protected String id;
-    protected String name;
-    protected String description;
-    protected double startingPrice;
-    protected double currentPrice;
-    protected LocalDateTime endTime;
-    protected User lastBidder;
-    protected boolean isAuctionActive = true;
-    protected String highestBidderName = "Chưa có";
+public abstract class Item extends Entity {
+    private static final long serialVersionUID = 1L;
 
-    // Constructor chung cho các lớp con gọi qua super()
-    public Item(String id, String name, String description, double startingPrice, double currentPrice) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.startingPrice = startingPrice;
-        this.currentPrice = currentPrice;
-        this.isAuctionActive = true;
+    private String sellerId;
+    private String title;
+    private String description;
+    private BigDecimal startingPrice;
+    private ItemCategory category;
+    private String imageDataUrl;
+
+    protected Item() {
+        super();
     }
 
-    // Phương thức trừu tượng để thực hiện tính đa hình
-    public abstract String getItemType();
+    protected Item(String sellerId, String title, String description,
+            BigDecimal startingPrice, ItemCategory category) {
+        super();
+        this.sellerId = sellerId;
+        this.title = title;
+        this.description = description;
+        this.startingPrice = startingPrice;
+        this.category = category;
+        this.imageDataUrl = "";
+    }
 
-    // Các Getter và Setter giữ nguyên để đảm bảo tính đóng gói (Encapsulation)[cite: 1]
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-    public User getLastBidder() { return lastBidder; }
-    public void setLastBidder(User lastBidder) { this.lastBidder = lastBidder; }
-    public boolean isAuctionActive() { return isAuctionActive; }
-    public void setAuctionActive(boolean active) { this.isAuctionActive = active; }
-    public String getStatus() { return isAuctionActive ? "Đang đấu giá" : "Đã kết thúc"; }
-    public String getHighestBidderName() { return highestBidderName; }
-    public void setHighestBidderName(String name) { this.highestBidderName = name; }
+    public abstract String printInfo();
+
+    public String getSellerId() {
+        return sellerId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public BigDecimal getStartingPrice() {
+        return startingPrice;
+    }
+
+    public ItemCategory getCategory() {
+        return category;
+    }
+
+    public String getImageDataUrl() {
+        return imageDataUrl;
+    }
+
+    public void setImageDataUrl(String imageDataUrl) {
+        this.imageDataUrl = imageDataUrl == null ? "" : imageDataUrl;
+    }
 }

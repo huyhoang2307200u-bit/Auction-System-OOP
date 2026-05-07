@@ -1,119 +1,134 @@
 package com.auction.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
-import com.auction.service.AuctionObserver;
+public class Auction extends Entity {
+    private static final long serialVersionUID = 1L;
 
-public class Auction {
-    private int id;
     private Item item;
-    private Bidder highestBidder;
-    private double highestBid;
+    private String sellerId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private boolean active;
-    private double minIncrement;
-    private java.util.List<com.auction.service.AuctionObserver> observers = new java.util.ArrayList<>();
+    private AuctionStatus status;
+    private BigDecimal currentPrice;
+    private String winnerBidderId;
+    private List<BidTransaction> bidHistory;
+    private int antiSnipingThresholdSeconds = 30;
+    private int antiSnipingExtensionSeconds = 60;
+    private transient ReentrantLock lock = new ReentrantLock(true);
+
     public Auction() {
+        super();
+        this.bidHistory = new ArrayList<>();
     }
 
-    public Auction(int id, Item item, Bidder highestBidder, double highestBid,
-                   LocalDateTime startTime, LocalDateTime endTime, boolean active) {
-        this.id = id;
+    public Auction(Item item, String sellerId, LocalDateTime startTime, LocalDateTime endTime) {
+        super();
         this.item = item;
-        this.highestBidder = highestBidder;
-        this.highestBid = highestBid;
+        this.sellerId = sellerId;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.active = active;
-    }
-    public int getId() {
-        return id;
+        this.status = AuctionStatus.OPEN;
+        this.currentPrice = item.getStartingPrice();
+        this.bidHistory = new ArrayList<>();
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void refreshStatus(LocalDateTime now) {
+        if (status == AuctionStatus.CANCELED || status == AuctionStatus.PAID) {
+            return;
+        }
+        if (!now.isBefore(endTime)) {
+            status = AuctionStatus.FINISHED;
+            return;
+        }
+        if (!now.isBefore(startTime) && status == AuctionStatus.OPEN) {
+            status = AuctionStatus.RUNNING;
+        }
+    }
+
+    public boolean canAcceptBid(LocalDateTime now) {
+        refreshStatus(now);
+        return status == AuctionStatus.RUNNING;
+    }
+
+    public void applyBid(BidTransaction bid) {
+        currentPrice = bid.getAmount();
+        winnerBidderId = bid.getBidderId();
+        bidHistory.add(bid);
+    }
+
+    public void extendEndTimeBySeconds(int seconds) {
+        endTime = endTime.plusSeconds(seconds);
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
     }
 
     public Item getItem() {
         return item;
     }
 
-    public void setItem(Item item) {
-        this.item = item;
-    }
-
-    public Bidder getHighestBidder() {
-        return highestBidder;
-    }
-
-    public void setHighestBidder(Bidder highestBidder) {
-        this.highestBidder = highestBidder;
-    }
-
-    public double getHighestBid() {
-        return highestBid;
-    }
-
-    public void setHighestBid(double highestBid) {
-        this.highestBid = highestBid;
+    public String getSellerId() {
+        return sellerId;
     }
 
     public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
     public LocalDateTime getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
+    public AuctionStatus getStatus() {
+        return status;
     }
 
-    public boolean isActive() {
-        return active;
+    public BigDecimal getCurrentPrice() {
+        return currentPrice;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-    @Override
-    public String toString() {
-        return "Auction{" +
-                "id=" + id +
-                ", item=" + item +
-                ", highestBidder=" + highestBidder +
-                ", highestBid=" + highestBid +
-                ", startTime=" + startTime +
-                ", endTime=" + endTime +
-                ", active=" + active +
-                '}';
+    public String getWinnerBidderId() {
+        return winnerBidderId;
     }
 
-    // Phương thức để các Controller/UI đăng ký lắng nghe
-    public void addObserver(com.auction.service.AuctionObserver observer) {
-        if (observer != null && !observers.contains(observer)) {
-            observers.add(observer);
+    public List<BidTransaction> getBidHistory() {
+        return Collections.unmodifiableList(bidHistory);
+    }
+
+    public int getAntiSnipingThresholdSeconds() {
+        return antiSnipingThresholdSeconds;
+    }
+
+    public void setAntiSnipingThresholdSeconds(int antiSnipingThresholdSeconds) {
+        this.antiSnipingThresholdSeconds = antiSnipingThresholdSeconds;
+    }
+
+    public int getAntiSnipingExtensionSeconds() {
+        return antiSnipingExtensionSeconds;
+    }
+
+    public void setAntiSnipingExtensionSeconds(int antiSnipingExtensionSeconds) {
+        this.antiSnipingExtensionSeconds = antiSnipingExtensionSeconds;
+    }
+
+    public void cancel() {
+        status = AuctionStatus.CANCELED;
+    }
+
+    private void readObject(ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+        inputStream.defaultReadObject();
+        lock = new ReentrantLock(true);
+        if (bidHistory == null) {
+            bidHistory = new ArrayList<>();
         }
     }
-
-    // Phương thức thông báo cho tất cả khi có giá cao nhất mới
-    public void notifyObservers() {
-        for (com.auction.service.AuctionObserver observer : observers) {
-            // Truyền ID, Giá mới và tên người đặt giá cao nhất cho UI cập nhật
-            observer.update(this.id, this.highestBid, 
-                (highestBidder != null ? highestBidder.getUsername() : "Chưa có"));
-        }
-    }
-
-    // Getter và Setter cho bước giá (minIncrement)
-    public double getMinIncrement() { return minIncrement; }
-    public void setMinIncrement(double minIncrement) { this.minIncrement = minIncrement; }
 }
