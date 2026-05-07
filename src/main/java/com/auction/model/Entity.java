@@ -1,6 +1,6 @@
 package com.auction.model;
 
-import com.example.auction.util.IdGenerator;
+import com.auction.util.IdGenerator;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;

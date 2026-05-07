@@ -1,6 +1,6 @@
 package com.auction.model;
 
-import com.example.auction.util.MoneyUtil;
+import com.auction.util.MoneyUtil;
 import java.math.BigDecimal;
 
 public final class ItemFactory {
