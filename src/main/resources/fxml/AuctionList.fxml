@@ -17,6 +17,12 @@
             <Button maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT;" text="Danh sách đấu giá" />
             <Button maxWidth="Infinity" onAction="#handleOpenAddItem" style="-fx-alignment: CENTER_LEFT;" text="Quản lý sản phẩm" />
             <Button maxWidth="Infinity" onAction="#handleOpenHistory" style="-fx-alignment: CENTER_LEFT;" text="Lịch sử giao dịch" />
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <Button maxWidth="Infinity" onAction="#handleOpenNewWindow"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                    text="Giả lập người dùng" />
         </VBox>
     </left>
 
@@ -40,14 +46,8 @@
     <bottom>
         <HBox alignment="CENTER_RIGHT" prefHeight="70.0" spacing="15.0" style="-fx-padding: 15; -fx-background-color: #f4f4f4; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;">
             <TextField fx:id="bidAmountField" prefHeight="35.0" prefWidth="160.0" promptText="Nhập giá đặt..." />
-
-            <Button fx:id="btnBid" onAction="#handleBidAction" prefHeight="35.0" prefWidth="100.0"
-                    style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
-                    text="Đấu giá" />
-
-            <Button fx:id="btnEndAuction" onAction="#handleEndAuction" prefHeight="35.0" prefWidth="130.0"
-                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
-                    text="Kết thúc phiên" />
+            <Button fx:id="btnBid" onAction="#handleBidAction" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Đấu giá" />
+            <Button fx:id="btnEndAuction" onAction="#handleEndAuction" prefHeight="35.0" prefWidth="130.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Kết thúc phiên" />
         </HBox>
     </bottom>
 </BorderPane>
