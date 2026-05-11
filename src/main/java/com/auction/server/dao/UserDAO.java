@@ -93,11 +93,6 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.out.println("[UserDAO] Lỗi kiểm tra username: " + e.getMessage());
-
-            /*
-             * Nếu lỗi database xảy ra, trả về true để tránh việc đăng ký trùng
-             * hoặc insert dữ liệu khi hệ thống đang không ổn định.
-             */
             return true;
         }
     }

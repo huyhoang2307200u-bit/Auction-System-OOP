@@ -100,7 +100,7 @@ public class AuctionManager {
                 throw new Exception("Giá đặt " + amount + " phải lớn hơn giá hiện tại " + item.getCurrentPrice());
             }
 
-            item.setCurrentPrice(amount);
+            item.setCurrentPrice(java.math.BigDecimal.valueOf(amount));
             item.setHighestBidderName(bidder == null ? "Không rõ" : bidder.getName());
             notifyObservers(itemId, amount);
         } finally {
