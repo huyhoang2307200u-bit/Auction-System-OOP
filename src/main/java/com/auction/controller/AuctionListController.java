@@ -1,42 +1,58 @@
 package com.auction.controller;
 
-import com.auction.service.AuctionClientService;
-import com.auction.service.AuctionObserver;
 import com.auction.model.Item;
 import com.auction.model.User;
-import com.auction.model.Admin;
 import com.auction.service.AuctionManager;
+import com.auction.service.AuctionObserver;
+import com.auction.service.BidService;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import java.util.List;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+
+import java.util.List;
 
 public class AuctionListController implements AuctionObserver {
 
     @FXML private TableView<Item> itemTable;
-    @FXML private TextField bidAmountField;
-    @FXML private Button btnEndAuction;
-    @FXML private Label userInfoLabel;
     @FXML private TableColumn<Item, String> colId;
     @FXML private TableColumn<Item, String> colName;
     @FXML private TableColumn<Item, Double> colCurrentPrice;
     @FXML private TableColumn<Item, String> colStatus;
 
+    @FXML private TextField bidAmountField;
+    @FXML private Button btnEndAuction;
+    @FXML private Button btnBid;
+    @FXML private Label userInfoLabel;
+
+    private final BidService bidService = new BidService();
     private User currentUser;
-    private final ObservableList<Item> masterData = FXCollections.observableArrayList();
+
+    // Sử dụng ObservableList để quản lý dữ liệu bảng mượt mà
+    private ObservableList<Item> masterData = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        // 1. Cấu hình bảng màu sắc
+        configureTable();
+        AuctionManager.getInstance().addObserver(this);
+
+        // Bật/tắt input dựa trên trạng thái chọn sản phẩm (Trải nghiệm người dùng tốt hơn)
+        itemTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            updateInputStates(newSelection);
+        });
+    }
+
+    private void configureTable() {
+        // Đổi màu dòng nếu phiên đấu giá đã kết thúc
         itemTable.setRowFactory(tv -> new TableRow<>() {
             @Override
             protected void updateItem(Item item, boolean empty) {
@@ -44,100 +60,75 @@ public class AuctionListController implements AuctionObserver {
                 if (item == null || empty) {
                     setStyle("");
                 } else if (!item.isAuctionActive()) {
-                    setStyle("-fx-background-color: #bdc3c7;");
+                    setStyle("-fx-background-color: #bdc3c7;"); // Màu xám
                 } else {
                     setStyle("");
                 }
             }
         });
 
-        // 2. Map dữ liệu vào cột
+        // Bọc dữ liệu POJO chuẩn của dev thành JavaFX Property để hiển thị
         colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getId()));
         colName.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
         colCurrentPrice.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getCurrentPrice()).asObject());
         colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
+    }
 
-        itemTable.setItems(masterData);
+    public void initData(User user) {
+        this.currentUser = user;
+        userInfoLabel.setText("Xin chào: " + user.getName() + " | Quyền: " + user.getRole());
 
-        // 3. ĐĂNG KÝ OBSERVER (Quan trọng cho Real-time)
-        AuctionManager.getInstance().addObserver(this);
+        // Kiểm tra quyền an toàn dựa trên hàm isAdmin() của Entity dev
+        boolean isAdmin = user.isAdmin();
+        if (btnEndAuction != null) {
+            btnEndAuction.setVisible(isAdmin);
+            btnEndAuction.setManaged(isAdmin);
+        }
 
         loadData();
     }
 
     private void loadData() {
-        // Ép Manager nạp lại dữ liệu từ Database (thông qua DAO mà Manager đang giữ)
-        AuctionManager.getInstance().refreshItemsFromDB();
         List<Item> items = AuctionManager.getInstance().getAvailableItems();
         masterData.setAll(items);
+        itemTable.setItems(masterData);
         itemTable.refresh();
+    }
+
+    // Logic khóa nút nếu sản phẩm đã đóng
+    private void updateInputStates(Item item) {
+        if (item != null) {
+            boolean isActive = item.isAuctionActive();
+            if (btnBid != null) btnBid.setDisable(!isActive);
+            if (bidAmountField != null) {
+                bidAmountField.setDisable(!isActive);
+                bidAmountField.setPromptText(isActive ? "Nhập giá..." : "Đã kết thúc");
+                if (!isActive) bidAmountField.clear();
+            }
+        }
     }
 
     @FXML
     public void handleBidAction() {
         Item selectedItem = itemTable.getSelectionModel().getSelectedItem();
-        String amountText = bidAmountField.getText().trim();
-
-        if (selectedItem == null || amountText.isEmpty()) {
-            showNotification("Thông báo", "Vui lòng chọn sản phẩm và nhập giá!");
+        if (selectedItem == null) {
+            showNotification("Thông báo", "Vui lòng chọn sản phẩm!");
             return;
         }
 
         try {
-            double amount = Double.parseDouble(amountText);
-
-            // Gửi lệnh sang Server (Middle-tier kiểm duyệt)
-            AuctionClientService clientService = new AuctionClientService();
-            // Định dạng %.0f để tránh số mũ E17 gây lỗi Server
-            String request = "BID|" + selectedItem.getId() + "|" + String.format("%.0f", amount);
-            String response = clientService.sendRequest(request);
-
-            if (response.startsWith("SUCCESS")) {
-                showNotification("Thành công", response.split("\\|")[1]);
-
-                // --- BƯỚC HOÀN HẢO: KÍCH HOẠT REAL-TIME ---
-                // Sau khi Server duyệt và ghi DB xong, ta báo cho Manager phát tín hiệu
-                // Điều này làm tất cả các cửa sổ đang mở tự gọi hàm onPriceChanged
-                AuctionManager.getInstance().notifyPriceChanged(selectedItem.getId(), amount);
-
+            double amount = Double.parseDouble(bidAmountField.getText().trim());
+            if (bidService.placeBid(selectedItem, currentUser, amount)) {
+                loadData();
+                showNotification("Thành công", "Đã đặt giá thành công!");
                 bidAmountField.clear();
-            } else if (response.startsWith("REJECT")) {
-                showNotification("Bị từ chối", "Lý do: " + response.split("\\|")[1]);
             } else {
-                showNotification("Lỗi Server", response);
+                showNotification("Lỗi", "Giá đặt không hợp lệ hoặc phiên đã đóng!");
             }
-
         } catch (NumberFormatException e) {
-            showNotification("Lỗi", "Giá đặt phải là số!");
-        }
-    }
-
-    @Override
-    public void onPriceChanged(String itemId, double newPrice) {
-        // Platform.runLater giúp cập nhật giao diện từ luồng phụ an toàn
-        Platform.runLater(() -> {
-            System.out.println(">>> Cập nhật UI cho ID: " + itemId + " -> " + newPrice);
-            loadData(); // Tải lại toàn bộ bảng để đồng bộ với Database Server
-        });
-    }
-
-    @FXML
-    private void handleOpenNewWindow() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AuctionList.fxml"));
-            Parent root = loader.load();
-            AuctionListController controller = loader.getController();
-
-            // Giả lập user khác để test
-            User guestUser = new User("123", "User_Test", "USER");
-            controller.initData(guestUser);
-
-            Stage stage = new Stage();
-            stage.setTitle("Cửa sổ Giả lập (Observer Mode)");
-            stage.setScene(new Scene(root));
-            stage.show();
+            showNotification("Lỗi", "Vui lòng nhập số tiền hợp lệ!");
         } catch (Exception e) {
-            e.printStackTrace();
+            showNotification("Lỗi", e.getMessage());
         }
     }
 
@@ -146,43 +137,68 @@ public class AuctionListController implements AuctionObserver {
         Item selectedItem = itemTable.getSelectionModel().getSelectedItem();
         if (selectedItem == null) return;
 
-        // Thông báo kết thúc phiên (có thể mở rộng gửi lên Server tương tự như BID)
         selectedItem.setAuctionActive(false);
-        AuctionManager.getInstance().notifyPriceChanged(selectedItem.getId(), selectedItem.getCurrentPrice());
-        showNotification("Thành công", "Đã kết thúc phiên!");
+        loadData(); // Làm mới bảng ngay lập tức
+        showNotification("Thành công", "Đã kết thúc phiên cho: " + selectedItem.getName());
     }
 
-    public void initData(User user) {
-        this.currentUser = user;
-        userInfoLabel.setText("Xin chào: " + user.getName() + " | Quyền: " + user.getRole());
-
-        boolean isAdmin = "ADMIN".equalsIgnoreCase(user.getRole());
-        if (btnEndAuction != null) {
-            btnEndAuction.setVisible(isAdmin);
-            btnEndAuction.setManaged(isAdmin);
-        }
+    @Override
+    public void onPriceChanged(String itemId, double newPrice) {
+        // Platform.runLater giúp an toàn khi cập nhật UI từ Thread khác (Socket/Observer)
+        Platform.runLater(() -> {
+            loadData();
+            Item selected = itemTable.getSelectionModel().getSelectedItem();
+            updateInputStates(selected);
+        });
     }
 
     @FXML
     private void handleOpenAddItem() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AddItem.fxml"));
-            Parent root = loader.load();
             Stage stage = new Stage();
-            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL); // Khóa màn hình chính khi đang thêm SP
+            stage.setScene(new Scene(FXMLLoader.load(getClass().getResource("/fxml/AddItem.fxml"))));
+            stage.setTitle("Thêm sản phẩm mới");
             stage.show();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showNotification("Lỗi", "Không thể mở màn hình thêm sản phẩm!");
+        }
     }
 
     @FXML
-    private void handleOpenHistory() {
+    private void handleOpenHistory(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/TransactionHistory.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
+            stage.setTitle("Lịch sử giao dịch");
             stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.show();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showNotification("Lỗi", "Không thể mở lịch sử giao dịch!");
+        }
+    }
+
+    @FXML
+    private void handleOpenNewWindow() {
+        try {
+            // Mở lại màn hình Đăng nhập trên một cửa sổ (Stage) hoàn toàn mới
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/Login.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            javafx.stage.Stage newStage = new javafx.stage.Stage();
+            newStage.setTitle("Giả lập người dùng (Client mới)");
+            newStage.setScene(new javafx.scene.Scene(root));
+            newStage.show();
+
+            System.out.println(">>> Hệ thống: Đã mở thêm một cửa sổ Client giả lập.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            showNotification("Lỗi", "Không thể mở cửa sổ mới: " + e.getMessage());
+        }
     }
 
     private void showNotification(String title, String message) {
@@ -190,6 +206,6 @@ public class AuctionListController implements AuctionObserver {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.show();
+        alert.showAndWait();
     }
 }

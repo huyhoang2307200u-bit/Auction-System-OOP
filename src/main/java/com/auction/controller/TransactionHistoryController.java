@@ -1,56 +1,42 @@
 package com.auction.controller;
 
-import com.auction.dao.TransactionDAO;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import com.auction.model.BidTransaction;
+import com.auction.service.TransactionManager;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.beans.property.SimpleStringProperty;
 
 public class TransactionHistoryController {
 
-    @FXML private TableView<String[]> historyTable;
-
-    // Khai báo thêm colId để khớp với FXML của bạn
-    @FXML private TableColumn<String[], String> colId;
-    @FXML private TableColumn<String[], String> colBidder;
-    @FXML private TableColumn<String[], String> colItem;
-    @FXML private TableColumn<String[], String> colAmount;
-    @FXML private TableColumn<String[], String> colTime;
-
-    private final TransactionDAO transactionDAO = new TransactionDAO();
+    @FXML private TableView<BidTransaction> historyTable;
+    @FXML private TableColumn<BidTransaction, Integer> colId;
+    @FXML private TableColumn<BidTransaction, String> colBidder;
+    @FXML private TableColumn<BidTransaction, String> colItem;
+    @FXML private TableColumn<BidTransaction, Double> colAmount;
+    @FXML private TableColumn<BidTransaction, String> colTime;
 
     @FXML
     public void initialize() {
-        // Kiểm tra an toàn
-        if (historyTable == null || colBidder == null) {
-            System.err.println(">>> Lỗi: Không tìm thấy các cột. Kiểm tra fx:id trong FXML!");
-            return;
-        }
-
-        // CẬP NHẬT INDEX: Phải khớp với thứ tự mảng String[] trong TransactionDAO.getFullHistory()
-        // [0]: ID, [1]: Username, [2]: ItemName, [3]: Amount, [4]: Formatted Time
-
+        // Sử dụng Property để bọc dữ liệu POJO, an toàn cho JSON/Socket
         if (colId != null) {
-            colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[0]));
+            colId.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getNumericId()).asObject());
         }
+        colBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getBidderName()));
+        colItem.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItemName()));
+        colAmount.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getBidAmount()).asObject());
+        colTime.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getFormattedTime()));
 
-        colBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[1]));
-        colItem.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[2]));
-        colAmount.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[3]));
-        colTime.setCellValueFactory(data -> new SimpleStringProperty(data.getValue()[4]));
-
-        // Tải dữ liệu từ DB
+        // Nạp dữ liệu từ Manager của dev
         refreshHistory();
     }
 
     private void refreshHistory() {
         try {
-            // Lấy dữ liệu mới từ DAO
-            ObservableList<String[]> data = FXCollections.observableArrayList(transactionDAO.getFullHistory());
-            historyTable.setItems(data);
-            System.out.println(">>> Hệ thống: Đã hiển thị " + data.size() + " bản ghi giao dịch.");
+            historyTable.setItems(TransactionManager.getInstance().getTransactionList());
+            System.out.println(">>> Hệ thống: Đã tải dữ liệu lịch sử giao dịch.");
         } catch (Exception e) {
             System.err.println(">>> Lỗi khi làm mới lịch sử: " + e.getMessage());
         }

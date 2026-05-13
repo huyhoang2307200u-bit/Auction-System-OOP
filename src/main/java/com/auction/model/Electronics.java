@@ -1,14 +1,34 @@
 package com.auction.model;
 
+import java.math.BigDecimal;
+
 public class Electronics extends Item {
-    public Electronics(String id, String name, double price) {
-        // Gán mô tả mặc định cho đồ điện tử
-        super(id, name, "Sản phẩm thiết bị điện tử", price, price);
+    private static final long serialVersionUID = 1L;
+
+    private String brand;
+    private int warrantyMonths;
+
+    public Electronics() {
+        super();
     }
 
-    // Ghi đè phương thức getItemType để trả về đúng loại
+    public Electronics(String sellerId, String title, String description, BigDecimal startingPrice,
+            String brand, int warrantyMonths) {
+        super(sellerId, title, description, startingPrice, ItemCategory.ELECTRONICS);
+        this.brand = brand;
+        this.warrantyMonths = warrantyMonths;
+    }
+
     @Override
-    public String getItemType() {
-        return "Điện tử";
+    public String printInfo() {
+        return getTitle() + " - " + brand + ", warranty " + warrantyMonths + " months";
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public int getWarrantyMonths() {
+        return warrantyMonths;
     }
 }

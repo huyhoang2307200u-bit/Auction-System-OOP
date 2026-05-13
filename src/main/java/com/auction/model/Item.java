@@ -1,50 +1,134 @@
 package com.auction.model;
 
+import com.auction.util.MoneyUtil;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javafx.beans.property.*;
 
-// Chuyển thành abstract class để áp dụng tính trừu tượng
-public abstract class Item {
-    protected String id;
-    protected String name;
-    protected String description;
-    protected double startingPrice;
-    protected double currentPrice;
-    protected LocalDateTime endTime;
-    protected User lastBidder;
-    protected boolean isAuctionActive = true;
-    protected String highestBidderName = "Chưa có";
+/**
+ * Lớp Item: Đại diện cho sản phẩm đấu giá.
+ * Kết hợp logic định danh, tính toán tài chính và thuộc tính hiển thị JavaFX.
+ */
+public abstract class Item extends Entity {
+    private static final long serialVersionUID = 1L;
 
-    // Constructor chung cho các lớp con gọi qua super()
-    public Item(String id, String name, String description, double startingPrice, double currentPrice) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.startingPrice = startingPrice;
-        this.currentPrice = currentPrice;
-        this.isAuctionActive = true;
+    // --- Thuộc tính cơ bản ---
+    private String sellerId;
+    private String title;
+    private String description;
+    private ItemCategory category;
+    private String imageDataUrl;
+
+    // --- Thuộc tính trạng thái đấu giá ---
+    private BigDecimal startingPrice;
+    private BigDecimal currentPrice;
+    private String highestBidderName;
+    private boolean auctionActive;
+    private LocalDateTime endTime;
+
+    /**
+     * Constructor mặc định cho các mục đích khởi tạo nhanh.
+     */
+    protected Item() {
+        super(); // Tự động sinh ID từ IdGenerator qua lớp Entity
+        this.imageDataUrl = "";
+        this.startingPrice = BigDecimal.ZERO;
+        this.currentPrice = BigDecimal.ZERO;
+        this.highestBidderName = "Chưa có";
+        this.auctionActive = true;
     }
 
-    // Phương thức trừu tượng để thực hiện tính đa hình
-    public abstract String getItemType();
+    /**
+     * Constructor đầy đủ để tạo một sản phẩm mới.
+     */
+    protected Item(String sellerId, String title, String description,
+                   BigDecimal startingPrice, ItemCategory category) {
+        super();
+        this.sellerId = sellerId;
+        this.title = title;
+        this.description = description;
+        this.category = category;
+        this.imageDataUrl = "";
 
-    // Các Getter và Setter giữ nguyên để đảm bảo tính đóng gói (Encapsulation)[cite: 1]
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+        // Chuẩn hóa tiền tệ ngay từ đầu bằng MoneyUtil
+        this.startingPrice = MoneyUtil.normalize(startingPrice);
+        this.currentPrice = this.startingPrice;
+
+        this.highestBidderName = "Chưa có";
+        this.auctionActive = true;
+    }
+
+    /**
+     * Phương thức trừu tượng để in thông tin chi tiết (Đa hình).
+     */
+    public abstract String printInfo();
+
+    // --- Getter và Setter thông thường ---
+
+    public String getSellerId() { return sellerId; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    // Phương thức bridge tương thích với code GUI cũ
+    public String getName() { return title; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+
+    public ItemCategory getCategory() { return category; }
+    public void setCategory(ItemCategory category) { this.category = category; }
+
+    public String getImageDataUrl() { return imageDataUrl; }
+    public void setImageDataUrl(String url) { this.imageDataUrl = (url == null) ? "" : url; }
+
+    public BigDecimal getStartingPrice() { return startingPrice; }
+
+    public BigDecimal getCurrentPriceValue() { return currentPrice; }
+
+    // Chuyển đổi sang double khi cần hiển thị lên giao diện đơn giản
+    public double getCurrentPrice() {
+        return MoneyUtil.toDouble(currentPrice);
+    }
+
+    public void setCurrentPrice(BigDecimal price) {
+        this.currentPrice = MoneyUtil.normalize(price);
+    }
+
+    public String getHighestBidderName() { return highestBidderName; }
+    public void setHighestBidderName(String name) {
+        this.highestBidderName = (name == null || name.isEmpty()) ? "Chưa có" : name;
+    }
+
+    public boolean isAuctionActive() { return auctionActive; }
+    public void setAuctionActive(boolean active) { this.auctionActive = active; }
+
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-    public User getLastBidder() { return lastBidder; }
-    public void setLastBidder(User lastBidder) { this.lastBidder = lastBidder; }
-    public boolean isAuctionActive() { return isAuctionActive; }
-    public void setAuctionActive(boolean active) { this.isAuctionActive = active; }
-    public String getStatus() { return isAuctionActive ? "Đang đấu giá" : "Đã kết thúc"; }
-    public String getHighestBidderName() { return highestBidderName; }
-    public void setHighestBidderName(String name) { this.highestBidderName = name; }
+
+    public String getStatus() {
+        return auctionActive ? "ĐANG MỞ" : "ĐÃ KẾT THÚC";
+    }
+
+    // --- CÁC PHƯƠNG THỨC JAVAFX PROPERTY (Dùng để Binding dữ liệu lên Bảng) ---
+
+    public StringProperty idProperty() {
+        return new SimpleStringProperty(getId());
+    }
+
+    public StringProperty nameProperty() {
+        return new SimpleStringProperty(getTitle());
+    }
+
+    public DoubleProperty currentPriceProperty() {
+        return new SimpleDoubleProperty(getCurrentPrice());
+    }
+
+    public StringProperty statusProperty() {
+        return new SimpleStringProperty(getStatus());
+    }
+
+    public StringProperty highestBidderProperty() {
+        return new SimpleStringProperty(getHighestBidderName());
+    }
 }

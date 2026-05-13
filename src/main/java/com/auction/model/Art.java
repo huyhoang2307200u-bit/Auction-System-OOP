@@ -1,15 +1,34 @@
 package com.auction.model;
 
-public class Art extends Item {
+import java.math.BigDecimal;
 
-    public Art(String id, String name, double price) {
-        // Gán mô tả mặc định cho tác phẩm nghệ thuật
-        super(id, name, "Tác phẩm nghệ thuật sưu tầm", price, price);
+public class Art extends Item {
+    private static final long serialVersionUID = 1L;
+
+    private String artist;
+    private String material;
+
+    public Art() {
+        super();
     }
 
-    // Ghi đè phương thức getItemType[cite: 1]
+    public Art(String sellerId, String title, String description, BigDecimal startingPrice,
+            String artist, String material) {
+        super(sellerId, title, description, startingPrice, ItemCategory.ART);
+        this.artist = artist;
+        this.material = material;
+    }
+
     @Override
-    public String getItemType() {
-        return "Nghệ thuật";
+    public String printInfo() {
+        return getTitle() + " - artwork by " + artist + " on " + material;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public String getMaterial() {
+        return material;
     }
 }

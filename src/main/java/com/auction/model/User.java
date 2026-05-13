@@ -1,55 +1,67 @@
 package com.auction.model;
 
-public class User {
-    // 1. Khai báo đầy đủ các thuộc tính (fields)
-    private int id;
+public abstract class User extends Entity {
+    private static final long serialVersionUID = 1L;
+
     private String username;
-    private String name;
-    private String email;
-    private String password;
-    private String role; // "ADMIN" hoặc "USER"
+    private String displayName;
+    private String passwordSalt;
+    private String passwordHash;
+    private Role role;
 
-    // 2. Constructor mặc định
-    public User() {
+    protected User() {
+        super();
     }
 
-    // 3. Constructor chính (Sử dụng cho logic đăng nhập)
-    public User(String username, String name, String role) {
+    protected User(String username, String displayName, String passwordSalt, String passwordHash, Role role) {
+        super();
         this.username = username;
-        this.name = name;
+        this.displayName = displayName;
+        this.passwordSalt = passwordSalt;
+        this.passwordHash = passwordHash;
         this.role = role;
     }
 
-    // 4. Constructor đầy đủ (Sử dụng cho quản lý dữ liệu)
-    public User(int id, String name, String email, String password, String role) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
+    protected User(int ignoredId, String displayName, String username, String password, String ignoredRoleName, Role role) {
+        super();
+        this.username = username;
+        this.displayName = displayName;
+        this.passwordSalt = "";
+        this.passwordHash = password;
         this.role = role;
     }
 
-    // 5. Getter và Setter (Đủ cho tất cả thuộc tính)
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public abstract String dashboardTitle();
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getDisplayName() {
+        return displayName;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return displayName;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getPassword() {
+        return passwordHash;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public String getPasswordSalt() {
+        return passwordSalt;
+    }
 
-    @Override
-    public String toString() {
-        return "User{" + "username='" + username + '\'' + ", name='" + name + '\'' + ", role='" + role + '\'' + '}';
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
     }
 }

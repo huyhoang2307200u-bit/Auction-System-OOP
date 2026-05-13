@@ -1,31 +1,40 @@
 package com.auction.service;
 
-import com.auction.dao.ItemDAO;
-import com.auction.dao.UserDAO;
+import com.auction.model.Admin;
+import com.auction.model.Auction;
+import com.auction.model.Bidder;
 import com.auction.model.Item;
+import com.auction.model.ItemFactory;
 import com.auction.model.User;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.time.LocalDateTime;
 
 public class AuctionManager {
     private static AuctionManager instance;
-    private final List<Item> items = new ArrayList<>();
-    private final List<AuctionObserver> observers = new CopyOnWriteArrayList<>(); // Dùng bản này để an toàn đa luồng
+
+    private final List<Item> items = new CopyOnWriteArrayList<>();
+    private final List<Auction> auctions = new CopyOnWriteArrayList<>();
+    private final List<AuctionObserver> observers = new CopyOnWriteArrayList<>();
     private final Map<String, ReentrantLock> itemLocks = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private final ItemDAO itemDAO = new ItemDAO();
-    private final UserDAO userDAO = new UserDAO();
-
     private AuctionManager() {
-        // Load toàn bộ sản phẩm từ Database lên RAM khi khởi động
-        refreshItemsFromDB();
+        Item item1 = ItemFactory.createItem("ART", "SP01", "Đồng hồ cổ", 500.0);
+        item1.setEndTime(LocalDateTime.now().plusMinutes(5));
+        items.add(item1);
 
-        // Chạy nhiệm vụ quét thời gian mỗi giây một lần để kết thúc phiên tự động
+        Item item2 = ItemFactory.createItem("ELECTRONICS", "SP02", "Laptop Gaming", 1200.0);
+        item2.setEndTime(LocalDateTime.now().plusMinutes(10));
+        items.add(item2);
+
         scheduler.scheduleAtFixedRate(this::checkAndEndAuctions, 0, 1, TimeUnit.SECONDS);
     }
 
@@ -37,102 +46,105 @@ public class AuctionManager {
     }
 
     public void addObserver(AuctionObserver observer) {
-        if (!observers.contains(observer)) {
+        if (observer != null) {
             observers.add(observer);
         }
     }
 
-    /**
-     * Phát tín hiệu Real-time cho các cửa sổ đang mở
-     */
-    public void notifyPriceChanged(String itemId, double newPrice) {
+    public void removeObserver(AuctionObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers(String itemId, double newPrice) {
         for (AuctionObserver observer : observers) {
             observer.onPriceChanged(itemId, newPrice);
         }
     }
 
-    /**
-     * Đồng bộ dữ liệu từ Database vào RAM
-     */
-    public void refreshItemsFromDB() {
-        items.clear();
-        items.addAll(itemDAO.getAllItems());
-    }
-
     public List<Item> getAvailableItems() {
-        return items;
+        return new ArrayList<>(items);
     }
 
-    // --- XÁC THỰC NGƯỜI DÙNG ---
-    public User authenticate(String username, String password) {
-        return userDAO.login(username, password);
+    public void addNewItem(Item item) {
+        if (item == null) {
+            return;
+        }
+        items.add(item);
+        notifyObservers(item.getId(), item.getCurrentPrice());
     }
 
-    /**
-     * Thông báo khi có sản phẩm mới được thêm vào
-     */
-    public void notifyItemAdded() {
-        refreshItemsFromDB();
-        notifyPriceChanged("NEW_ITEM", 0);
+    public void createAuction(Auction auction) {
+        if (auction == null || auctions.contains(auction)) {
+            return;
+        }
+        auctions.add(auction);
+        if (auction.getItem() != null && !items.contains(auction.getItem())) {
+            items.add(auction.getItem());
+        }
+        System.out.println("Đã tạo phiên đấu giá cho sản phẩm: " + auction.getItem().getName());
     }
 
-    // --- XỬ LÝ ĐẤU GIÁ ĐỒNG THỜI (REAL-TIME CORE) ---
     public void placeBid(String itemId, double amount, User bidder) throws Exception {
-        ReentrantLock lock = itemLocks.computeIfAbsent(itemId, k -> new ReentrantLock());
+        ReentrantLock lock = itemLocks.computeIfAbsent(itemId, ignored -> new ReentrantLock(true));
+
         lock.lock();
         try {
             Item item = findItemById(itemId);
-            if (item == null) throw new Exception("Không tìm thấy sản phẩm!");
-
-            if (!item.isAuctionActive()) throw new Exception("Phiên đã kết thúc!");
-            if (amount <= item.getCurrentPrice()) throw new Exception("Giá đặt phải lớn hơn giá hiện tại!");
-
-            // --- QUY TRÌNH REAL-TIME CHUẨN ---
-
-            // 1. Lưu vào Database trước (Đảm bảo dữ liệu bền vững)
-            if (itemDAO.updatePrice(itemId, amount)) {
-
-                // 2. Cập nhật vào đối tượng trong RAM
-                item.setCurrentPrice(amount);
-
-                // 3. Làm tươi danh sách trong RAM để các cửa sổ khác lấy được bản mới nhất
-                refreshItemsFromDB();
-
-                // 4. Phát tín hiệu Real-time cho các máy khách
-                notifyPriceChanged(itemId, amount);
-
-                System.out.println("Hệ thống: Đã cập nhật giá mới " + amount + " cho SP " + itemId);
-            } else {
-                throw new Exception("Lỗi: Không thể cập nhật giá vào Database!");
+            if (item == null) {
+                throw new Exception("Không tìm thấy sản phẩm!");
+            }
+            if (!item.isAuctionActive()) {
+                throw new Exception("Phiên đấu giá đã kết thúc!");
+            }
+            if (amount <= item.getCurrentPrice()) {
+                throw new Exception("Giá đặt " + amount + " phải lớn hơn giá hiện tại " + item.getCurrentPrice());
             }
 
+            item.setCurrentPrice(java.math.BigDecimal.valueOf(amount));
+            item.setHighestBidderName(bidder == null ? "Không rõ" : bidder.getName());
+            notifyObservers(itemId, amount);
         } finally {
             lock.unlock();
         }
     }
 
-    private Item findItemById(String id) {
-        return items.stream().filter(i -> i.getId().equals(id)).findFirst().orElse(null);
+    // Hàm tương thích với code cũ dùng int auctionId
+    public void placeBid(int auctionId, double amount, Bidder bidder) throws Exception {
+        placeBid(String.valueOf(auctionId), amount, bidder);
     }
 
-    // --- TỰ ĐỘNG KẾT THÚC PHIÊN ---
+    private Item findItemById(String id) {
+        return items.stream()
+                .filter(item -> item.getId().equals(id) || item.getSellerId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
     public void checkAndEndAuctions() {
         LocalDateTime now = LocalDateTime.now();
-        boolean hasChange = false;
-
         for (Item item : items) {
             if (item.isAuctionActive() && item.getEndTime() != null && now.isAfter(item.getEndTime())) {
                 item.setAuctionActive(false);
-                // Lưu trạng thái đóng vào DB
-                itemDAO.updateStatus(item.getId(), false);
-                hasChange = true;
+                notifyObservers(item.getId(), item.getCurrentPrice());
                 System.out.println("Hệ thống: Tự động đóng phiên " + item.getId());
             }
         }
+    }
 
-        if (hasChange) {
-            refreshItemsFromDB();
-            notifyPriceChanged("AUCTION_CLOSED", 0);
+    public User authenticate(String username, String password) {
+        List<User> userList = new ArrayList<>();
+        userList.add(new Admin(1, "Quản trị viên", "admin@gmail.com", "123", "ADMIN"));
+        userList.add(new Bidder(2, "Người đấu giá", "user@gmail.com", "123", "USER"));
+
+        for (User user : userList) {
+            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+                return user;
+            }
         }
+        return null;
+    }
+
+    public void shutdown() {
+        scheduler.shutdownNow();
     }
 }
