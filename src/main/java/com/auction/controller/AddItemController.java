@@ -9,21 +9,20 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 public class AddItemController {
-    // Phải khớp với fx:id trong file FXML mới
-    @FXML private TextField idField;
+
+    // Chỉ giữ lại nameField và priceField, đã bỏ idField
     @FXML private TextField nameField;
     @FXML private TextField priceField;
 
     @FXML
-    public void handleAdd() {
+    public void handleSaveItem() { // Đã đổi tên hàm khớp với FXML
         try {
             // 1. Lấy dữ liệu từ các ô nhập liệu
-            String id = idField.getText().trim();
             String name = nameField.getText().trim();
             String priceText = priceField.getText().trim();
 
             // 2. Kiểm tra dữ liệu trống
-            if (id.isEmpty() || name.isEmpty() || priceText.isEmpty()) {
+            if (name.isEmpty() || priceText.isEmpty()) {
                 showError("Vui lòng nhập đầy đủ thông tin!");
                 return;
             }
@@ -31,7 +30,9 @@ public class AddItemController {
             // 3. Chuyển đổi giá tiền và tạo đối tượng
             double price = Double.parseDouble(priceText);
 
-            Item newItem = ItemFactory.createItem("ELECTRONICS", id, name, price);
+            // ID của Item sẽ tự động được Entity sinh ra (UUID)
+            // Tạm thời truyền "seller1" làm sellerId
+            Item newItem = ItemFactory.createItem("ELECTRONICS", "seller1", name, price);
             newItem.setAuctionActive(true);
 
             // 4. Thêm vào danh sách quản lý
@@ -51,7 +52,7 @@ public class AddItemController {
     @FXML
     private void handleCancel() {
         // Đóng cửa sổ khi nhấn Hủy
-        Stage stage = (Stage) idField.getScene().getWindow();
+        Stage stage = (Stage) nameField.getScene().getWindow();
         stage.close();
     }
 

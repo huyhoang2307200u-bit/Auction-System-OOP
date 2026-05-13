@@ -17,7 +17,7 @@ public class BidService {
 
         // 3. Cập nhật giá và ghi nhật ký
         synchronized(item) {
-            item.setCurrentPrice(amount);
+            item.setCurrentPrice(java.math.BigDecimal.valueOf(amount));
             item.setHighestBidderName(user.getName());
 
             try {

@@ -1,12 +1,22 @@
 package com.auction.model;
 
 public class Seller extends User {
+    private static final long serialVersionUID = 1L;
+
     public Seller() {
         super();
     }
 
-    public Seller(int id, String name, String email, String password) {
-        // Truyền thêm "SELLER" vào tham số cuối cùng
-        super(id, name, email, password, "SELLER");
+    public Seller(String username, String displayName, String passwordSalt, String passwordHash) {
+        super(username, displayName, passwordSalt, passwordHash, Role.SELLER);
+    }
+
+    public Seller(int id, String name, String username, String password, String roleName) {
+        super(id, name, username, password, roleName, Role.SELLER);
+    }
+
+    @Override
+    public String dashboardTitle() {
+        return "Bảng điều khiển người bán";
     }
 }

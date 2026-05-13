@@ -1,4 +1,5 @@
 package com.auction.model;
+
 import com.auction.dto.AuctionDetailDto;
 import java.time.LocalDateTime;
 
@@ -14,7 +15,7 @@ public class AuctionEvent {
     }
 
     public AuctionEvent(AuctionEventType type, String auctionId, String message,
-                        BidTransaction bid, AuctionDetailDto detail, LocalDateTime timestamp) {
+            BidTransaction bid, AuctionDetailDto detail, LocalDateTime timestamp) {
         this.type = type;
         this.auctionId = auctionId;
         this.message = message;
@@ -47,4 +48,3 @@ public class AuctionEvent {
         return timestamp;
     }
 }
-
