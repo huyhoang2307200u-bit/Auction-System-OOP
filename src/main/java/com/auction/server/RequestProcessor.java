@@ -16,8 +16,12 @@ public class RequestProcessor {
     }
 
     public Response process(Request request) {
-        if (request == null || request.getType() == null) {
-            return new Response(false, "Yêu cầu không hợp lệ.", null);
+        if (request == null) {
+            return new Response(false, "Yêu cầu không được null.", null);
+        }
+
+        if (request.getType() == null) {
+            return new Response(false, "Loại yêu cầu không được để trống.", null);
         }
 
         RequestType type = request.getType();
@@ -32,14 +36,20 @@ public class RequestProcessor {
             case LOGIN:
                 return authController.login(request);
 
+            case REGISTER:
+                return authController.register(request);
+
             case GET_AUCTIONS:
                 return auctionController.getAuctions();
+
+            case GET_AUCTION_DETAIL:
+                return auctionController.getAuctionDetail(request);
 
             case PLACE_BID:
                 return auctionController.placeBid(request);
 
             case EXIT:
-                return new Response(true, "Tạm biệt! Đang ngắt kết nối với server...", null);
+                return new Response(true, "Tạm biệt! Đang ngắt kết nối với server.", null);
 
             default:
                 return new Response(false, "Loại yêu cầu chưa được hỗ trợ: " + type, null);

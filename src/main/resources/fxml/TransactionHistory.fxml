@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.auction.controller.TransactionHistoryController">
+    <center>
+        <TableView fx:id="historyTable" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn text="ID" fx:id="colId" prefWidth="50"/>
+                <TableColumn text="Người đấu" fx:id="colBidder" prefWidth="150"/>
+                <TableColumn text="Sản phẩm" fx:id="colItem" prefWidth="150"/>
+                <TableColumn text="Giá" fx:id="colAmount" prefWidth="100"/>
+                <TableColumn text="Thời gian" fx:id="colTime" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>

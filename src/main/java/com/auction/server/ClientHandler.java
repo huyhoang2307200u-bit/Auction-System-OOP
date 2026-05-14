@@ -42,8 +42,8 @@ public class ClientHandler implements Runnable {
             while ((rawJson = input.readLine()) != null) {
                 log(clientInfo, "JSON nhận được: " + rawJson);
 
-                Response response;
                 Request request = null;
+                Response response;
 
                 try {
                     request = gson.fromJson(rawJson, Request.class);
@@ -65,12 +65,19 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             log(clientInfo, "Lỗi kết nối: " + e.getMessage());
         } finally {
-            try {
+            closeSocket(clientInfo);
+        }
+    }
+
+    private void closeSocket(String clientInfo) {
+        try {
+            if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
-                log(clientInfo, "Đã đóng kết nối.");
-            } catch (IOException e) {
-                log(clientInfo, "Không thể đóng socket: " + e.getMessage());
             }
+
+            log(clientInfo, "Đã đóng kết nối.");
+        } catch (IOException e) {
+            log(clientInfo, "Không thể đóng socket: " + e.getMessage());
         }
     }
 

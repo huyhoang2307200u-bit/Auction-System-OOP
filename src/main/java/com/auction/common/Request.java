@@ -2,10 +2,13 @@ package com.auction.common;
 
 public class Request {
     private RequestType type;
+
     private String message;
+
     private String username;
     private String password;
     private String role;
+
     private Integer auctionId;
     private Double amount;
 

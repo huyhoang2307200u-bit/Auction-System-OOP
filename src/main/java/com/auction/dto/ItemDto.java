@@ -4,7 +4,7 @@ import com.auction.model.ItemCategory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class CreateAuctionPayload {
+public class ItemDto {
     private ItemCategory category;
     private String title;
     private String description;
