@@ -29,23 +29,31 @@ public class RegisterController {
             return;
         }
 
+        if (role.equals("ADMIN")) {
+            showAlert("Không hợp lệ", "Không được đăng ký tài khoản Admin. Admin duy nhất được tạo sẵn bởi hệ thống.");
+            return;
+        }
+
         // Khởi tạo User theo vai trò. Tạm cấp ID bằng Random, sau này Server tự cấp.
         int tempId = (int)(Math.random() * 1000);
-        User newUser = role.equals("SELLER")
-                ? new Seller(tempId, user, user, pass, "SELLER")
-                : new Bidder(tempId, user, user, pass, "BIDDER");
+        User newUser;
+        if (role.equals("SELLER")) {
+            newUser = new Seller(tempId, user, user, pass, "SELLER");
+        } else {
+            newUser = new Bidder(tempId, user, user, pass, "BIDDER");
+        }
 
         if (AuthService.register(newUser)) {
             showAlert("Thành công", "Đăng ký tài khoản thành công!");
-            SceneManager.switchScene("Login.fxml");
+            SceneManager.switchScene(usernameField, "Login.fxml");
         } else {
-            showAlert("Thất bại", "Lỗi đăng ký hệ thống!");
+            showAlert("Thất bại", "Lỗi đăng ký hệ thống! Username có thể đã tồn tại hoặc role không hợp lệ.");
         }
     }
 
     @FXML
     private void goToLogin() {
-        SceneManager.switchScene("Login.fxml");
+        SceneManager.switchScene(usernameField, "Login.fxml");
     }
 
     private void showAlert(String title, String content) {
