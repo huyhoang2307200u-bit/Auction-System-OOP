@@ -28,6 +28,29 @@ public class AuthService {
         users.add(user);
         return true;
     }
+    public static User findUserById(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return null;
+        }
+        for (User user : users) {
+            if (user.getId().equals(userId)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public static User findUserByUsername(String username) {
+        if (username == null || username.isBlank()) {
+            return null;
+        }
+        for (User user : users) {
+            if (user.getUsername().equalsIgnoreCase(username.trim())) {
+                return user;
+            }
+        }
+        return null;
+    }
 
     public static User login(String username, String password) {
         for (User u : users) {
