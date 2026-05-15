@@ -1,7 +1,7 @@
 package com.auction.controller;
 
 import com.auction.model.User;
-import com.auction.service.AuthService; // <-- Phải import đúng dòng này
+import com.auction.service.AuthService;
 import com.auction.util.SceneManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,7 +23,7 @@ public class LoginController {
         User loggedInUser = AuthService.login(username, password);
 
         if (loggedInUser != null) {
-            SceneManager.switchSceneWithUser("AuctionList.fxml", loggedInUser);
+            SceneManager.switchSceneWithUser(usernameField, "AuctionList.fxml", loggedInUser);
         } else {
             showErrorAlert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu!");
         }
@@ -31,7 +31,7 @@ public class LoginController {
 
     @FXML
     public void handleRegister(ActionEvent event) {
-        SceneManager.switchScene("Register.fxml");
+        SceneManager.switchScene(usernameField, "Register.fxml");
     }
 
     @FXML

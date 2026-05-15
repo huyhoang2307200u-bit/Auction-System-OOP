@@ -5,6 +5,7 @@ import com.auction.model.User;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.scene.Scene;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.fxml.FXMLLoader;
 import java.io.IOException;
@@ -18,6 +19,13 @@ public class SceneManager {
                 .orElse(null);
     }
 
+    private static Stage getStageFromNode(Node source) {
+        if (source != null && source.getScene() != null && source.getScene().getWindow() instanceof Stage stage) {
+            return stage;
+        }
+        return getCurrentStage();
+    }
+
     public static void switchScene(String fxmlFile) {
         try {
             String path = fxmlFile.startsWith("/") ? fxmlFile : "/fxml/" + fxmlFile;
@@ -29,6 +37,46 @@ public class SceneManager {
                 stage.getScene().setRoot(root);
                 stage.sizeToScene();
                 stage.centerOnScreen();
+                stage.show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchScene(Node source, String fxmlFile) {
+        try {
+            String path = fxmlFile.startsWith("/") ? fxmlFile : "/fxml/" + fxmlFile;
+            FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(path));
+            Parent root = loader.load();
+
+            Stage stage = getStageFromNode(source);
+            if (stage != null) {
+                stage.getScene().setRoot(root);
+                stage.sizeToScene();
+                stage.centerOnScreen();
+                stage.show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchSceneWithUser(Node source, String fxmlFile, User user) {
+        try {
+            String path = fxmlFile.startsWith("/") ? fxmlFile : "/fxml/" + fxmlFile;
+            FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(path));
+            Parent root = loader.load();
+
+            AuctionListController controller = loader.getController();
+            if (controller != null) {
+                controller.initData(user);
+            }
+
+            Stage stage = getStageFromNode(source);
+            if (stage != null) {
+                stage.setScene(new Scene(root));
+                stage.setTitle("Hệ thống Đấu giá - " + user.getRole().name() + ": " + user.getUsername());
                 stage.show();
             }
         } catch (IOException e) {

@@ -3,20 +3,26 @@
 <?import javafx.scene.control.*?>
 
 <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #f4f4f4;" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.controller.AddItemController" prefWidth="350">
+      fx:controller="com.auction.controller.AddItemController" prefWidth="460">
 
     <Label text="THÊM SẢN PHẨM ĐẤU GIÁ"
            style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
 
     <GridPane vgap="10" hgap="10">
+        <Label text="Loại sản phẩm:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="categoryComboBox" prefWidth="260" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-        <!-- Trường nhập Tên sản phẩm -->
-        <Label text="Tên sản phẩm:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="nameField" promptText="Nhập tên sản phẩm..." GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Label text="Tên sản phẩm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="nameField" promptText="Nhập tên sản phẩm..." GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-        <!-- Trường nhập Giá khởi điểm -->
-        <Label text="Giá khởi điểm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="priceField" promptText="VD: 5000" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label text="Mô tả:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Mô tả ngắn về sản phẩm..." GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Giá khởi điểm:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="priceField" promptText="VD: 5000" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Thời lượng (phút):" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="durationMinutesField" promptText="VD: 10" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
     </GridPane>
 
     <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
