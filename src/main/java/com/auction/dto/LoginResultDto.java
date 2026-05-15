@@ -3,29 +3,21 @@ package com.auction.dto;
 import com.auction.model.Role;
 
 public class LoginResultDto {
-    private String token;
     private String userId;
     private String username;
     private String displayName;
     private Role role;
+    private double balance;
 
     public LoginResultDto() {
     }
 
-    public LoginResultDto(String token, String userId, String username, String displayName, Role role) {
-        this.token = token;
+    public LoginResultDto(String userId, String username, String displayName, Role role, double balance) {
         this.userId = userId;
         this.username = username;
         this.displayName = displayName;
         this.role = role;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
+        this.balance = balance;
     }
 
     public String getUserId() {
@@ -58,5 +50,13 @@ public class LoginResultDto {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }
