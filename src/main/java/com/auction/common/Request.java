@@ -1,20 +1,26 @@
 package com.auction.common;
 
 public class Request {
-    private String token; // Thêm trường này
-
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
     private RequestType type;
 
     private String message;
 
     private String username;
     private String password;
+    private String displayName;
     private String role;
 
     private Integer auctionId;
+    private Integer depositRequestId;
     private Double amount;
+
+    private String itemName;
+    private String description;
+    private String category;
+    private Integer durationMinutes;
+    private Double maxBid;
+    private Double increment;
+    private String rejectionReason;
 
     public Request() {
     }
@@ -51,6 +57,14 @@ public class Request {
         this.password = password;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     public String getRole() {
         return role;
     }
@@ -67,6 +81,14 @@ public class Request {
         this.auctionId = auctionId;
     }
 
+    public Integer getDepositRequestId() {
+        return depositRequestId;
+    }
+
+    public void setDepositRequestId(Integer depositRequestId) {
+        this.depositRequestId = depositRequestId;
+    }
+
     public Double getAmount() {
         return amount;
     }
@@ -75,16 +97,73 @@ public class Request {
         this.amount = amount;
     }
 
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(Integer durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public Double getMaxBid() {
+        return maxBid;
+    }
+
+    public void setMaxBid(Double maxBid) {
+        this.maxBid = maxBid;
+    }
+
+    public Double getIncrement() {
+        return increment;
+    }
+
+    public void setIncrement(Double increment) {
+        this.increment = increment;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
     @Override
     public String toString() {
         return "Request{" +
                 "type=" + type +
                 ", message='" + message + '\'' +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
                 ", role='" + role + '\'' +
                 ", auctionId=" + auctionId +
+                ", depositRequestId=" + depositRequestId +
                 ", amount=" + amount +
+                ", itemName='" + itemName + '\'' +
                 '}';
     }
 }
