@@ -21,8 +21,8 @@
 
             <Separator />
             <Label text="Ví tài khoản" style="-fx-font-weight: bold;" />
-            <Label fx:id="balanceLabel" text="Số dư ví: 0.00" />
-            <TextField fx:id="depositAmountField" promptText="Số tiền cần nạp" />
+            <Label fx:id="balanceLabel" text="Số dư ví: 0VND" />
+            <TextField fx:id="depositAmountField" promptText="VD: 1.000.000VND" />
             <Button fx:id="btnDeposit" maxWidth="Infinity" onAction="#handleDepositAction"
                     style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;" text="Gửi yêu cầu nạp" />
             <Button fx:id="btnReviewDeposits" maxWidth="Infinity" onAction="#handleReviewDeposits"
@@ -31,8 +31,8 @@
 
             <Separator />
             <Label text="Auto-Bidding" style="-fx-font-weight: bold;" />
-            <TextField fx:id="autoMaxBidField" promptText="Giá tối đa" />
-            <TextField fx:id="autoIncrementField" promptText="Bước giá" />
+            <TextField fx:id="autoMaxBidField" promptText="VD: 2.000.000VND" />
+            <TextField fx:id="autoIncrementField" promptText="VD: 50.000VND" />
             <Button fx:id="btnAutoBid" maxWidth="Infinity" onAction="#handleAutoBidAction"
                     style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-weight: bold;" text="Bật auto-bid" />
 
@@ -78,7 +78,7 @@
 
     <bottom>
         <HBox alignment="CENTER_RIGHT" prefHeight="70.0" spacing="15.0" style="-fx-padding: 15; -fx-background-color: #f4f4f4; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;">
-            <TextField fx:id="bidAmountField" prefHeight="35.0" prefWidth="170.0" promptText="Nhập giá đặt..." />
+            <TextField fx:id="bidAmountField" prefHeight="35.0" prefWidth="170.0" promptText="VD: 1.000.000VND" />
             <Button fx:id="btnBid" onAction="#handleBidAction" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Đấu giá" />
             <Button fx:id="btnEndAuction" onAction="#handleEndAuction" prefHeight="35.0" prefWidth="130.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Kết thúc phiên" />
         </HBox>

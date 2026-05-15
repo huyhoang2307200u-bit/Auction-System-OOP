@@ -12,6 +12,7 @@ public class Request {
 
     private Integer auctionId;
     private Integer depositRequestId;
+    private Integer notificationId;
     private Double amount;
 
     private String itemName;
@@ -89,6 +90,14 @@ public class Request {
         this.depositRequestId = depositRequestId;
     }
 
+    public Integer getNotificationId() {
+        return notificationId;
+    }
+
+    public void setNotificationId(Integer notificationId) {
+        this.notificationId = notificationId;
+    }
+
     public Double getAmount() {
         return amount;
     }
@@ -162,6 +171,7 @@ public class Request {
                 ", role='" + role + '\'' +
                 ", auctionId=" + auctionId +
                 ", depositRequestId=" + depositRequestId +
+                ", notificationId=" + notificationId +
                 ", amount=" + amount +
                 ", itemName='" + itemName + '\'' +
                 '}';

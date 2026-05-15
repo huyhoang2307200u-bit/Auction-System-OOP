@@ -16,7 +16,7 @@ public class AuctionDAO {
         List<AuctionDTO> auctions = new ArrayList<>();
 
         String sql = """
-                SELECT id, item_name, description, current_price, status
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
                 FROM auctions
                 ORDER BY id ASC
                 """;
@@ -40,7 +40,7 @@ public class AuctionDAO {
 
     public AuctionDTO getAuctionById(int auctionId) {
         String sql = """
-                SELECT id, item_name, description, current_price, status
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
                 FROM auctions
                 WHERE id = ?
                 """;
@@ -65,14 +65,22 @@ public class AuctionDAO {
     }
 
     public boolean createAuction(String itemName, String description, double startPrice, String status) {
-        return createAuction(null, itemName, description, startPrice, status);
+        return createAuction(null, itemName, description, "ELECTRONICS", startPrice, 10, status);
     }
 
     public boolean createAuction(String sellerUsername, String itemName, String description, double startPrice, String status) {
+        return createAuction(sellerUsername, itemName, description, "ELECTRONICS", startPrice, 10, status);
+    }
+
+    public boolean createAuction(String sellerUsername, String itemName, String description,
+                                 String category, double startPrice, Integer durationMinutes, String status) {
         String sql = """
-                INSERT INTO auctions (seller_username, item_name, description, starting_price, current_price, status)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO auctions (seller_username, item_name, description, category, starting_price, current_price, end_time, status)
+                VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?)
                 """;
+
+        int safeDuration = durationMinutes == null || durationMinutes <= 0 ? 10 : durationMinutes;
+        String safeCategory = category == null || category.isBlank() ? "ELECTRONICS" : category.trim().toUpperCase();
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
@@ -81,9 +89,11 @@ public class AuctionDAO {
             statement.setString(1, sellerUsername);
             statement.setString(2, itemName);
             statement.setString(3, description);
-            statement.setDouble(4, startPrice);
+            statement.setString(4, safeCategory);
             statement.setDouble(5, startPrice);
-            statement.setString(6, status);
+            statement.setDouble(6, startPrice);
+            statement.setInt(7, safeDuration);
+            statement.setString(8, status);
 
             return statement.executeUpdate() > 0;
 
@@ -133,6 +143,71 @@ public class AuctionDAO {
             System.out.println("[AuctionDAO] Lỗi khi từ chối phiên đấu giá: " + e.getMessage());
             return false;
         }
+    }
+
+    public boolean finishAuction(int auctionId) {
+        String sql = """
+                UPDATE auctions
+                SET status = 'FINISHED'
+                WHERE id = ? AND status IN ('OPEN', 'RUNNING')
+                """;
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setInt(1, auctionId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("[AuctionDAO] Lỗi khi kết thúc phiên đấu giá: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<AuctionDTO> finishExpiredAuctions() {
+        List<AuctionDTO> expiredAuctions = new ArrayList<>();
+
+        String selectSql = """
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
+                FROM auctions
+                WHERE status IN ('OPEN', 'RUNNING')
+                  AND end_time IS NOT NULL
+                  AND end_time <= NOW()
+                """;
+
+        String updateSql = """
+                UPDATE auctions
+                SET status = 'FINISHED'
+                WHERE id = ? AND status IN ('OPEN', 'RUNNING')
+                """;
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement selectStatement = connection.prepareStatement(selectSql);
+                 PreparedStatement updateStatement = connection.prepareStatement(updateSql);
+                 ResultSet resultSet = selectStatement.executeQuery()) {
+
+                while (resultSet.next()) {
+                    AuctionDTO auction = mapResultSetToAuctionDTO(resultSet);
+                    updateStatement.setInt(1, auction.getId());
+                    int affected = updateStatement.executeUpdate();
+                    if (affected > 0) {
+                        auction.setStatus("FINISHED");
+                        expiredAuctions.add(auction);
+                    }
+                }
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                System.out.println("[AuctionDAO] Lỗi khi tự kết thúc phiên hết hạn: " + e.getMessage());
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.out.println("[AuctionDAO] Lỗi kết nối khi tự kết thúc phiên hết hạn: " + e.getMessage());
+        }
+
+        return expiredAuctions;
     }
 
     public boolean updateAuction(int auctionId, String itemName, String description, double currentPrice, String status) {
@@ -204,7 +279,7 @@ public class AuctionDAO {
 
     public BidResult placeBid(int auctionId, String username, double amount) {
         String selectAuctionSql = """
-                SELECT current_price, status, winner_username
+                SELECT current_price, status, winner_username, end_time
                 FROM auctions
                 WHERE id = ?
                 FOR UPDATE
@@ -230,7 +305,7 @@ public class AuctionDAO {
 
         String updateAuctionSql = """
                 UPDATE auctions
-                SET current_price = ?, winner_username = ?, version = version + 1
+                SET current_price = ?, winner_username = ?, status = 'RUNNING', version = version + 1
                 WHERE id = ?
                 """;
 
@@ -260,6 +335,12 @@ public class AuctionDAO {
                     if (!isAuctionOpenForBidding(status)) {
                         connection.rollback();
                         return new BidResult(false, "Phiên đấu giá đã đóng hoặc không thể đặt giá.", currentPrice);
+                    }
+
+                    if (resultSet.getTimestamp("end_time") != null
+                            && !resultSet.getTimestamp("end_time").toLocalDateTime().isAfter(java.time.LocalDateTime.now())) {
+                        connection.rollback();
+                        return new BidResult(false, "Phiên đấu giá đã hết thời gian. Vui lòng tải lại danh sách.", currentPrice);
                     }
 
                     if (amount <= currentPrice) {
@@ -373,7 +454,10 @@ public class AuctionDAO {
                 resultSet.getString("item_name"),
                 resultSet.getString("description"),
                 resultSet.getDouble("current_price"),
-                resultSet.getString("status")
+                resultSet.getString("status"),
+                resultSet.getString("seller_username"),
+                resultSet.getString("winner_username"),
+                resultSet.getTimestamp("end_time") == null ? null : resultSet.getTimestamp("end_time").toLocalDateTime().toString()
         );
     }
 

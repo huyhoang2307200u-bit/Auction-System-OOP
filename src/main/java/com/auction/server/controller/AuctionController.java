@@ -32,9 +32,18 @@ public class AuctionController {
                 user.getRole(),
                 request.getItemName(),
                 request.getDescription(),
-                request.getAmount()
+                request.getCategory(),
+                request.getAmount(),
+                request.getDurationMinutes()
         );
     }
+    public Response finishAuction(AuthenticatedUser user, Request request) {
+        if (user == null) {
+            return new Response(false, "Bạn cần đăng nhập để kết thúc phiên.", null);
+        }
+        return auctionService.finishAuction(user.getRole(), request.getAuctionId());
+    }
+
 
     public Response deleteAuction(AuthenticatedUser user, Request request) {
         if (user == null) {

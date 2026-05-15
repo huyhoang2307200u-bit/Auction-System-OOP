@@ -7,6 +7,7 @@ import com.auction.dto.LoginResultDto;
 import com.auction.server.controller.AuctionController;
 import com.auction.server.controller.AuthController;
 import com.auction.server.controller.WalletController;
+import com.auction.server.controller.NotificationController;
 import com.auction.server.dao.UserDAO;
 import com.auction.server.security.AuthenticatedUser;
 
@@ -14,6 +15,7 @@ public class RequestProcessor {
     private final AuthController authController;
     private final AuctionController auctionController;
     private final WalletController walletController;
+    private final NotificationController notificationController;
     private final UserDAO userDAO;
     private AuthenticatedUser currentUser;
 
@@ -21,6 +23,7 @@ public class RequestProcessor {
         this.authController = new AuthController();
         this.auctionController = new AuctionController();
         this.walletController = new WalletController();
+        this.notificationController = new NotificationController();
         this.userDAO = new UserDAO();
     }
 
@@ -66,6 +69,9 @@ public class RequestProcessor {
             case REJECT_AUCTION:
                 return auctionController.rejectAuction(resolveCurrentUser(request), request);
 
+            case FINISH_AUCTION:
+                return auctionController.finishAuction(resolveCurrentUser(request), request);
+
             case REGISTER_AUTO_BID:
                 return auctionController.registerAutoBid(resolveCurrentUser(request), request);
 
@@ -101,6 +107,13 @@ public class RequestProcessor {
                 }
                 return response;
             }
+
+
+            case GET_UNREAD_NOTIFICATIONS:
+                return notificationController.getUnreadNotifications(resolveCurrentUser(request));
+
+            case MARK_NOTIFICATION_READ:
+                return notificationController.markNotificationRead(resolveCurrentUser(request), request);
 
             case EXIT:
                 currentUser = null;

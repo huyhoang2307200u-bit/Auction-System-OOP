@@ -2,7 +2,7 @@ package com.auction.controller;
 
 import com.auction.model.BidTransaction;
 import com.auction.service.TransactionManager;
-import javafx.beans.property.SimpleDoubleProperty;
+import com.auction.util.MoneyUtil;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -15,7 +15,7 @@ public class TransactionHistoryController {
     @FXML private TableColumn<BidTransaction, Integer> colId;
     @FXML private TableColumn<BidTransaction, String> colBidder;
     @FXML private TableColumn<BidTransaction, String> colItem;
-    @FXML private TableColumn<BidTransaction, Double> colAmount;
+    @FXML private TableColumn<BidTransaction, String> colAmount;
     @FXML private TableColumn<BidTransaction, String> colTime;
 
     @FXML
@@ -26,7 +26,7 @@ public class TransactionHistoryController {
         }
         colBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getBidderName()));
         colItem.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getItemName()));
-        colAmount.setCellValueFactory(data -> new SimpleDoubleProperty(data.getValue().getBidAmount()).asObject());
+        colAmount.setCellValueFactory(data -> new SimpleStringProperty(MoneyUtil.formatVnd(data.getValue().getBidAmountValue())));
         colTime.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getFormattedTime()));
 
         // Nạp dữ liệu từ Manager của dev

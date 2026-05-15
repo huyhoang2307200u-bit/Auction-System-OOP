@@ -1,13 +1,9 @@
 package com.auction.controller;
 
-import com.auction.model.Item;
-import com.auction.model.ItemCategory;
-import com.auction.model.ItemFactory;
+import com.auction.client.ServerApiClient;
 import com.auction.model.User;
-import com.auction.service.AuctionManager;
 import com.auction.util.MoneyUtil;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
@@ -29,6 +25,7 @@ public class AddItemController {
         categoryComboBox.getItems().setAll("ELECTRONICS", "ART", "VEHICLE");
         categoryComboBox.setValue("ELECTRONICS");
         durationMinutesField.setText("10");
+        priceField.setPromptText("VD: 1.000.000VND");
     }
 
     public void initData(User user) {
@@ -38,45 +35,37 @@ public class AddItemController {
     @FXML
     public void handleSaveItem() {
         try {
-            String name = nameField.getText().trim();
+            String name = nameField.getText() == null ? "" : nameField.getText().trim();
             String description = descriptionArea.getText() == null ? "" : descriptionArea.getText().trim();
-            String priceText = priceField.getText().trim();
-            String durationText = durationMinutesField.getText().trim();
+            String priceText = priceField.getText() == null ? "" : priceField.getText().trim();
+            String durationText = durationMinutesField.getText() == null ? "" : durationMinutesField.getText().trim();
 
+            if (currentUser == null) {
+                showError("Bạn cần đăng nhập trước khi tạo sản phẩm.");
+                return;
+            }
             if (name.isEmpty() || priceText.isEmpty() || durationText.isEmpty()) {
                 showError("Vui lòng nhập tên sản phẩm, giá khởi điểm và thời lượng phiên.");
                 return;
             }
 
-            BigDecimal price = MoneyUtil.fromDouble(Double.parseDouble(priceText));
-            long durationMinutes = Long.parseLong(durationText);
+            BigDecimal price = MoneyUtil.parseUserAmount(priceText);
+            int durationMinutes = Integer.parseInt(durationText);
             if (price.compareTo(BigDecimal.ZERO) <= 0 || durationMinutes <= 0) {
                 showError("Giá khởi điểm và thời lượng phiên phải lớn hơn 0.");
                 return;
             }
 
-            ItemCategory category = ItemCategory.valueOf(categoryComboBox.getValue());
-            String sellerId = currentUser == null ? "seller" : currentUser.getId();
-            Item newItem = ItemFactory.create(
-                    category,
-                    sellerId,
+            ServerApiClient.getInstance().createAuction(
                     name,
                     description,
-                    price,
-                    "Generic",
-                    12,
-                    "Unknown artist",
-                    "Unknown material",
-                    "Unknown manufacturer",
-                    LocalDateTime.now().getYear()
+                    categoryComboBox.getValue(),
+                    price.doubleValue(),
+                    durationMinutes
             );
-            newItem.setEndTime(LocalDateTime.now().plusMinutes(durationMinutes));
-            newItem.setAuctionActive(true);
-
-            AuctionManager.getInstance().addNewItem(newItem);
             closeWindow();
         } catch (NumberFormatException e) {
-            showError("Giá khởi điểm và thời lượng phiên phải là số hợp lệ.");
+            showError("Giá khởi điểm phải là số tiền hợp lệ, ví dụ: 1.000.000VND. Thời lượng phiên phải là số phút hợp lệ.");
         } catch (Exception e) {
             showError("Có lỗi xảy ra: " + e.getMessage());
         }

@@ -19,7 +19,7 @@
         <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Mô tả ngắn về sản phẩm..." GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
         <Label text="Giá khởi điểm:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <TextField fx:id="priceField" promptText="VD: 5000" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        <TextField fx:id="priceField" promptText="VD: 1.000.000VND" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
         <Label text="Thời lượng (phút):" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
         <TextField fx:id="durationMinutesField" promptText="VD: 10" GridPane.rowIndex="4" GridPane.columnIndex="1"/>

@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -29,11 +30,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Singleton quản lý phiên đấu giá phía client/demo.
+ * Singleton quản lý phiên đấu giá phía JavaFX demo/local.
  *
- * <p>Lớp này gom các nghiệp vụ bắt buộc quan trọng để có thể kiểm thử độc lập:
- * kiểm tra giá đấu hợp lệ, tránh race condition bằng lock theo sản phẩm, ghi lịch sử bid,
- * auto-bidding, anti-sniping và Observer để cập nhật realtime cho JavaFX.</p>
+ * <p>Lớp này xử lý nghiệp vụ đấu giá, ví tạm giữ, auto-bidding, anti-sniping,
+ * realtime observer, thông báo kết thúc phiên và lưu trạng thái cục bộ.</p>
  */
 public class AuctionManager {
     private static AuctionManager instance;
@@ -54,9 +54,12 @@ public class AuctionManager {
 
     private final int antiSnipingThresholdSeconds = 30;
     private final int antiSnipingExtensionSeconds = 60;
+    private boolean bootstrapping;
 
     private AuctionManager() {
+        bootstrapping = true;
         seedDemoData();
+        bootstrapping = false;
         scheduler.scheduleAtFixedRate(this::checkAndEndAuctionsSafely, 0, 1, TimeUnit.SECONDS);
     }
 
@@ -68,7 +71,7 @@ public class AuctionManager {
     }
 
     public void addObserver(AuctionObserver observer) {
-        if (observer != null) {
+        if (observer != null && !observers.contains(observer)) {
             observers.add(observer);
         }
     }
@@ -106,7 +109,9 @@ public class AuctionManager {
         item.setAuctionActive(true);
         items.add(item);
         bidHistoryByItem.putIfAbsent(item.getId(), new CopyOnWriteArrayList<>());
-        notifyObservers(item.getId(), item.getCurrentPrice());
+        if (!bootstrapping) {
+            notifyObservers(item.getId(), item.getCurrentPrice());
+        }
     }
 
     public void createAuction(Auction auction) {
@@ -136,7 +141,8 @@ public class AuctionManager {
             BigDecimal bidAmount = MoneyUtil.fromDouble(amount);
             BigDecimal currentPrice = item.getCurrentPriceValue();
             if (bidAmount.compareTo(currentPrice) <= 0) {
-                throw new InvalidBidException("Giá đặt " + bidAmount + " phải lớn hơn giá hiện tại " + currentPrice + ".");
+                throw new InvalidBidException("Giá đặt " + MoneyUtil.formatVnd(bidAmount)
+                        + " phải lớn hơn giá hiện tại " + MoneyUtil.formatVnd(currentPrice) + ".");
             }
 
             applyBidLocked(item, bidder.getId(), bidder.getName(), bidAmount, false);
@@ -146,7 +152,6 @@ public class AuctionManager {
         }
     }
 
-    // Hàm tương thích với code cũ dùng int auctionId
     public void placeBid(int auctionId, double amount, Bidder bidder) throws Exception {
         placeBid(String.valueOf(auctionId), amount, bidder);
     }
@@ -173,7 +178,8 @@ public class AuctionManager {
                 throw new InvalidBidException("Max bid phải lớn hơn giá hiện tại.");
             }
             if (!bidder.canAfford(max)) {
-                throw new InvalidBidException("Số dư không đủ để bật auto-bid với maxBid " + max + ". Vui lòng nạp thêm tiền.");
+                throw new InvalidBidException("Số dư không đủ để bật auto-bid với maxBid "
+                        + MoneyUtil.formatVnd(max) + ". Vui lòng nạp thêm tiền.");
             }
 
             List<AutoBidConfig> configs = autoBidsByItem.computeIfAbsent(itemId, ignored -> new CopyOnWriteArrayList<>());
@@ -203,7 +209,9 @@ public class AuctionManager {
         lock.lock();
         try {
             Item item = requireItem(itemId);
-            item.setAuctionActive(false);
+            if (item.isAuctionActive()) {
+                closeAuctionLocked(item, "Phiên đấu giá đã được Admin kết thúc.");
+            }
             notifyObservers(item.getId(), item.getCurrentPrice());
         } finally {
             lock.unlock();
@@ -212,32 +220,27 @@ public class AuctionManager {
 
     public void checkAndEndAuctions() {
         LocalDateTime now = LocalDateTime.now();
+        boolean changed = false;
         for (Item item : items) {
             ReentrantLock lock = itemLocks.computeIfAbsent(item.getId(), ignored -> new ReentrantLock(true));
             lock.lock();
             try {
                 if (item.isAuctionActive() && item.getEndTime() != null && !now.isBefore(item.getEndTime())) {
-                    item.setAuctionActive(false);
+                    closeAuctionLocked(item, "Phiên đấu giá đã tự động kết thúc vì hết thời gian.");
                     notifyObservers(item.getId(), item.getCurrentPrice());
+                    changed = true;
                     System.out.println("Hệ thống: Tự động đóng phiên " + item.getId());
                 }
             } finally {
                 lock.unlock();
             }
         }
+        if (changed) {
+        }
     }
 
     public User authenticate(String username, String password) {
-        List<User> userList = new ArrayList<>();
-        userList.add(new Admin(1, "Quản trị viên", "admin@gmail.com", "123", "ADMIN"));
-        userList.add(new Bidder(2, "Người đấu giá", "user@gmail.com", "123", "BIDDER"));
-
-        for (User user : userList) {
-            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
-                return user;
-            }
-        }
-        return null;
+        return AuthService.login(username, password);
     }
 
     public void resetForTesting() {
@@ -248,23 +251,88 @@ public class AuctionManager {
         autoBidsByItem.clear();
         runtimeUsersById.clear();
         autoBidPriority.set(0);
+        TransactionManager.getInstance().resetForTesting();
+        NotificationManager.getInstance().resetForTesting();
     }
 
     public void seedDemoData() {
         if (!items.isEmpty()) {
             return;
         }
-        Item item1 = ItemFactory.createItem("ART", "seller", "Đồng hồ cổ", 500.0);
+        User seller = AuthService.findUserByUsername("seller");
+        String sellerId = seller == null ? "seller" : seller.getId();
+
+        Item item1 = ItemFactory.createItem("ART", sellerId, "Đồng hồ cổ", 500.0);
         item1.setEndTime(LocalDateTime.now().plusMinutes(5));
         addNewItem(item1);
 
-        Item item2 = ItemFactory.createItem("ELECTRONICS", "seller", "Laptop Gaming", 1200.0);
+        Item item2 = ItemFactory.createItem("ELECTRONICS", sellerId, "Laptop Gaming", 1200.0);
         item2.setEndTime(LocalDateTime.now().plusMinutes(10));
         addNewItem(item2);
 
-        Item item3 = ItemFactory.createItem("VEHICLE", "seller", "Xe máy Vespa cổ", 1500.0);
+        Item item3 = ItemFactory.createItem("VEHICLE", sellerId, "Xe máy Vespa cổ", 1500.0);
         item3.setEndTime(LocalDateTime.now().plusMinutes(8));
         addNewItem(item3);
+    }
+
+    public List<Item> snapshotItems() {
+        return new ArrayList<>(items);
+    }
+
+    public Map<String, List<BidTransaction>> snapshotBidHistory() {
+        Map<String, List<BidTransaction>> snapshot = new HashMap<>();
+        for (Map.Entry<String, List<BidTransaction>> entry : bidHistoryByItem.entrySet()) {
+            snapshot.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return snapshot;
+    }
+
+    public Map<String, List<AutoBidConfig>> snapshotAutoBids() {
+        Map<String, List<AutoBidConfig>> snapshot = new HashMap<>();
+        for (Map.Entry<String, List<AutoBidConfig>> entry : autoBidsByItem.entrySet()) {
+            snapshot.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return snapshot;
+    }
+
+    public void restoreState(List<Item> savedItems,
+                             Map<String, List<BidTransaction>> savedBidHistory,
+                             Map<String, List<AutoBidConfig>> savedAutoBids) {
+        items.clear();
+        auctions.clear();
+        itemLocks.clear();
+        bidHistoryByItem.clear();
+        autoBidsByItem.clear();
+        runtimeUsersById.clear();
+        for (User user : AuthService.snapshotUsers()) {
+            runtimeUsersById.put(user.getId(), user);
+        }
+
+        if (savedItems != null) {
+            items.addAll(savedItems);
+        }
+        if (items.isEmpty()) {
+            seedDemoData();
+        }
+        for (Item item : items) {
+            bidHistoryByItem.putIfAbsent(item.getId(), new CopyOnWriteArrayList<>());
+        }
+
+        if (savedBidHistory != null) {
+            for (Map.Entry<String, List<BidTransaction>> entry : savedBidHistory.entrySet()) {
+                bidHistoryByItem.put(entry.getKey(), new CopyOnWriteArrayList<>(entry.getValue()));
+            }
+        }
+        if (savedAutoBids != null) {
+            long maxPriority = 0;
+            for (Map.Entry<String, List<AutoBidConfig>> entry : savedAutoBids.entrySet()) {
+                autoBidsByItem.put(entry.getKey(), new CopyOnWriteArrayList<>(entry.getValue()));
+                for (AutoBidConfig config : entry.getValue()) {
+                    maxPriority = Math.max(maxPriority, config.getPriorityOrder());
+                }
+            }
+            autoBidPriority.set(maxPriority);
+        }
     }
 
     public void shutdown() {
@@ -292,8 +360,6 @@ public class AuctionManager {
             try {
                 applyBidLocked(item, winner.getBidderId(), "AutoBid-" + winner.getBidderId(), nextAmount, true);
             } catch (InvalidBidException e) {
-                // Auto-bid không còn đủ số dư hoặc không hợp lệ thì tắt cấu hình đó,
-                // các auto-bid khác vẫn tiếp tục được xét.
                 winner.deactivate();
                 continue;
             }
@@ -327,7 +393,8 @@ public class AuctionManager {
         return history.get(history.size() - 1).getBidderId();
     }
 
-    private void applyBidLocked(Item item, String bidderId, String bidderName, BigDecimal amount, boolean autoGenerated) throws InvalidBidException {
+    private void applyBidLocked(Item item, String bidderId, String bidderName, BigDecimal amount, boolean autoGenerated)
+            throws InvalidBidException {
         BigDecimal normalizedAmount = MoneyUtil.normalize(amount);
         reserveBidFundsLocked(item, bidderId, normalizedAmount);
         item.setCurrentPrice(normalizedAmount);
@@ -348,11 +415,10 @@ public class AuctionManager {
         notifyObservers(item.getId(), normalizedAmount.doubleValue());
     }
 
-
     /**
      * Cơ chế ví tiền demo: mỗi bid đang dẫn đầu được giữ tiền ngay.
      * Khi có người khác vượt giá, hệ thống hoàn lại số tiền đang giữ cho người dẫn đầu cũ
-     * rồi giữ số tiền của người dẫn đầu mới. Nhờ vậy bidder phải nạp đủ tiền trước khi đặt giá.
+     * rồi giữ số tiền của người dẫn đầu mới.
      */
     private void reserveBidFundsLocked(Item item, String newBidderId, BigDecimal newAmount) throws InvalidBidException {
         User newBidder = runtimeUsersById.get(newBidderId);
@@ -362,6 +428,7 @@ public class AuctionManager {
         if (newBidder == null) {
             throw new InvalidBidException("Không tìm thấy ví tiền của người đặt giá.");
         }
+        runtimeUsersById.putIfAbsent(newBidder.getId(), newBidder);
 
         List<BidTransaction> history = bidHistoryByItem.getOrDefault(item.getId(), List.of());
         String previousBidderId = history.isEmpty() ? null : history.get(history.size() - 1).getBidderId();
@@ -370,7 +437,6 @@ public class AuctionManager {
                 : MoneyUtil.normalize(history.get(history.size() - 1).getBidAmountValue());
 
         if (previousBidderId != null && previousBidderId.equals(newBidderId)) {
-            // Người đang dẫn đầu tự tăng giá: hoàn lại khoản giữ cũ rồi giữ khoản mới.
             newBidder.credit(previousHeldAmount);
             try {
                 newBidder.debit(newAmount);
@@ -382,8 +448,9 @@ public class AuctionManager {
         }
 
         if (!newBidder.canAfford(newAmount)) {
-            throw new InvalidBidException("Số dư không đủ để đặt giá " + newAmount
-                    + ". Số dư hiện tại: " + newBidder.getBalanceValue() + ". Vui lòng nạp thêm tiền.");
+            throw new InvalidBidException("Số dư không đủ để đặt giá " + MoneyUtil.formatVnd(newAmount)
+                    + ". Số dư hiện tại: " + MoneyUtil.formatVnd(newBidder.getBalanceValue())
+                    + ". Vui lòng nạp thêm tiền.");
         }
 
         if (previousBidderId != null && previousHeldAmount.compareTo(BigDecimal.ZERO) > 0) {
@@ -417,7 +484,8 @@ public class AuctionManager {
             throw new AuctionClosedException("Phiên đấu giá đã kết thúc.");
         }
         if (item.getEndTime() != null && !LocalDateTime.now().isBefore(item.getEndTime())) {
-            item.setAuctionActive(false);
+            closeAuctionLocked(item, "Phiên đấu giá đã tự động kết thúc vì hết thời gian.");
+            notifyObservers(item.getId(), item.getCurrentPrice());
             throw new AuctionClosedException("Phiên đấu giá đã hết thời gian.");
         }
     }
@@ -427,6 +495,56 @@ public class AuctionManager {
                 .filter(item -> item.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sản phẩm/phiên đấu giá: " + id));
+    }
+
+    private void closeAuctionLocked(Item item, String reason) {
+        if (item == null || !item.isAuctionActive()) {
+            return;
+        }
+        item.setAuctionActive(false);
+        sendAuctionFinishedNotifications(item, reason);
+    }
+
+    private void sendAuctionFinishedNotifications(Item item, String reason) {
+        List<BidTransaction> history = bidHistoryByItem.getOrDefault(item.getId(), List.of());
+        BidTransaction winningBid = history.isEmpty() ? null : history.get(history.size() - 1);
+        String finalPrice = MoneyUtil.formatVnd(item.getCurrentPriceValue());
+
+        User seller = AuthService.findUserById(item.getSellerId());
+        if (seller == null) {
+            seller = AuthService.findUserByUsername(item.getSellerId());
+        }
+        String sellerUsername = seller == null ? null : seller.getUsername();
+
+        if (winningBid != null) {
+            User winner = AuthService.findUserById(winningBid.getBidderId());
+            if (winner == null) {
+                winner = AuthService.findUserByUsername(winningBid.getBidderName());
+            }
+            if (winner != null) {
+                NotificationManager.getInstance().addNotification(
+                        winner.getUsername(),
+                        "Bạn đã thắng phiên đấu giá",
+                        "Chúc mừng! Bạn đã đấu giá thành công sản phẩm \"" + item.getName()
+                                + "\" với giá " + finalPrice + ". " + reason
+                );
+            }
+
+            if (sellerUsername != null) {
+                NotificationManager.getInstance().addNotification(
+                        sellerUsername,
+                        "Phiên đấu giá đã kết thúc",
+                        "Sản phẩm \"" + item.getName() + "\" đã kết thúc. Người thắng: "
+                                + winningBid.getBidderName() + ". Giá cuối: " + finalPrice + ". " + reason
+                );
+            }
+        } else if (sellerUsername != null) {
+            NotificationManager.getInstance().addNotification(
+                    sellerUsername,
+                    "Phiên đấu giá đã kết thúc",
+                    "Sản phẩm \"" + item.getName() + "\" đã kết thúc nhưng chưa có người đặt giá. " + reason
+            );
+        }
     }
 
     private void checkAndEndAuctionsSafely() {
