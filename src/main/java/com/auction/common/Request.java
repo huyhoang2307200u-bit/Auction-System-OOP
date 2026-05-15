@@ -1,6 +1,10 @@
 package com.auction.common;
 
 public class Request {
+    private String token; // Thêm trường này
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
     private RequestType type;
 
     private String message;
