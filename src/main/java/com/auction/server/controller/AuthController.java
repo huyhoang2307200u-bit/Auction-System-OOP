@@ -2,6 +2,8 @@ package com.auction.server.controller;
 
 import com.auction.common.Request;
 import com.auction.common.Response;
+import com.auction.exception.AuthenticationException;
+import com.auction.model.Role;
 import com.auction.server.service.AuthService;
 
 public class AuthController {
@@ -15,72 +17,23 @@ public class AuthController {
         String username = request.getUsername();
         String password = request.getPassword();
 
-        if (isBlank(username) || isBlank(password)) {
-            return new Response(false, "Tên đăng nhập hoặc mật khẩu không được để trống.", null);
+        if (username == null || username.isBlank() ||
+                password == null || password.isBlank()) {
+            return new Response(false, "Username or password cannot be empty.", null);
         }
 
-        boolean isAuthenticated = authService.authenticate(username, password);
-
-        if (!isAuthenticated) {
-            return new Response(false, "Tên đăng nhập hoặc mật khẩu không đúng.", null);
+        try {
+            return new Response(true, "Login successful.", authService.login(username, password));
+        } catch (AuthenticationException | IllegalStateException e) {
+            return new Response(false, e.getMessage(), null);
         }
-
-        String role = authService.getUserRole(username);
-
-        return new Response(
-                true,
-                "Đăng nhập thành công.",
-                "Xin chào " + username + " | Vai trò: " + role
-        );
     }
 
     public Response register(Request request) {
         String username = request.getUsername();
         String password = request.getPassword();
         String role = request.getRole();
-
-        if (isBlank(username)) {
-            return new Response(false, "Tên đăng nhập không được để trống.", null);
-        }
-
-        if (isBlank(password)) {
-            return new Response(false, "Mật khẩu không được để trống.", null);
-        }
-
-        if (isBlank(role)) {
-            return new Response(false, "Vai trò không được để trống.", null);
-        }
-
-        role = role.trim().toUpperCase();
-
-        if (!role.equals("BIDDER") && !role.equals("SELLER") && !role.equals("ADMIN")) {
-            return new Response(false, "Vai trò không hợp lệ. Chỉ chấp nhận BIDDER, SELLER hoặc ADMIN.", null);
-        }
-
-        if (authService.existsByUsername(username)) {
-            return new Response(false, "Tên đăng nhập đã tồn tại.", null);
-        }
-
-        boolean registered = authService.register(username, password, role);
-
-        if (!registered) {
-            return new Response(false, "Đăng ký thất bại. Vui lòng thử lại.", null);
-        }
-
-        return new Response(
-                true,
-                "Đăng ký thành công.",
-                "Tài khoản: " + username + " | Vai trò: " + role
-        );
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-    public Response register(Request request) {
-        String username = request.getUsername();
-        String password = request.getPassword();
-        String role = request.getRole();
+        String displayName = request.getDisplayName();
 
         if (username == null || username.isBlank()
                 || password == null || password.isBlank()
@@ -88,12 +41,18 @@ public class AuthController {
             return new Response(false, "Tên đăng nhập, mật khẩu và vai trò không được để trống.", null);
         }
 
-        boolean success = authService.register(username, password, role);
+        if (Role.ADMIN.name().equalsIgnoreCase(role.trim())) {
+            return new Response(false,
+                    "Không được phép đăng ký tài khoản Admin. Admin duy nhất được seed sẵn bởi hệ thống.",
+                    null);
+        }
+
+        boolean success = authService.register(username, password, role, displayName);
 
         if (success) {
             return new Response(true, "Đăng ký thành công.", null);
         }
 
-        return new Response(false, "Đăng ký thất bại. Tên đăng nhập có thể đã tồn tại.", null);
+        return new Response(false, "Đăng ký thất bại. Tên đăng nhập có thể đã tồn tại hoặc vai trò không hợp lệ.", null);
     }
 }
