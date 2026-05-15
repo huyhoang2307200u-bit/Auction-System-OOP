@@ -1,33 +1,23 @@
 package com.auction.dto;
 
 import com.auction.model.Role;
-import java.io.Serializable;
 
-public class LoginResultDto implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private String token;
+public class LoginResultDto {
     private String userId;
     private String username;
     private String displayName;
     private Role role;
+    private double balance;
 
     public LoginResultDto() {
     }
 
-    public LoginResultDto(String token, String userId, String username, String displayName, Role role) {
-        this.token = token;
+    public LoginResultDto(String userId, String username, String displayName, Role role, double balance) {
         this.userId = userId;
         this.username = username;
         this.displayName = displayName;
         this.role = role;
-    }
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
+        this.balance = balance;
     }
 
     public String getUserId() {
@@ -62,9 +52,11 @@ public class LoginResultDto implements Serializable {
         this.role = role;
     }
 
-    // Bổ sung hàm tiện ích kiểm tra nhanh xem đăng nhập thành công hay thất bại
-    // Nếu token != null nghĩa là đăng nhập thành công
-    public boolean isSuccess() {
-        return token != null && !token.trim().isEmpty();
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }
