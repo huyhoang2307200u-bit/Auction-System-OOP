@@ -31,12 +31,15 @@ public class ClientHandler implements Runnable {
 
         log(clientInfo, "Bắt đầu xử lý client.");
 
+        PrintWriter output = null;
+
         try (
                 BufferedReader input = new BufferedReader(
                         new InputStreamReader(clientSocket.getInputStream())
-                );
-                PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true)
+                )
         ) {
+            output = new PrintWriter(clientSocket.getOutputStream(), true);
+            RealtimeClientRegistry.register(output);
             String rawJson;
 
             while ((rawJson = input.readLine()) != null) {
@@ -57,6 +60,17 @@ public class ClientHandler implements Runnable {
 
                 log(clientInfo, "Phản hồi đã gửi: " + responseJson);
 
+                if (request != null && request.getType() == RequestType.PLACE_BID && response.isSuccess()) {
+                    RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_BID_UPDATE", response.getData()));
+                }
+
+                if (request != null
+                        && (request.getType() == RequestType.APPROVE_AUCTION
+                        || request.getType() == RequestType.REJECT_AUCTION)
+                        && response.isSuccess()) {
+                    RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_MODERATION_UPDATE", response.getMessage()));
+                }
+
                 if (request != null && request.getType() == RequestType.EXIT) {
                     break;
                 }
@@ -65,6 +79,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             log(clientInfo, "Lỗi kết nối: " + e.getMessage());
         } finally {
+            if (output != null) {
+                RealtimeClientRegistry.unregister(output);
+            }
             closeSocket(clientInfo);
         }
     }
