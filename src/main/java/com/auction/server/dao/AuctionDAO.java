@@ -65,24 +65,72 @@ public class AuctionDAO {
     }
 
     public boolean createAuction(String itemName, String description, double startPrice, String status) {
+        return createAuction(null, itemName, description, startPrice, status);
+    }
+
+    public boolean createAuction(String sellerUsername, String itemName, String description, double startPrice, String status) {
         String sql = """
-                INSERT INTO auctions (item_name, description, current_price, status)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO auctions (seller_username, item_name, description, starting_price, current_price, status)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)
         ) {
-            statement.setString(1, itemName);
-            statement.setString(2, description);
-            statement.setDouble(3, startPrice);
-            statement.setString(4, status);
+            statement.setString(1, sellerUsername);
+            statement.setString(2, itemName);
+            statement.setString(3, description);
+            statement.setDouble(4, startPrice);
+            statement.setDouble(5, startPrice);
+            statement.setString(6, status);
 
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
             System.out.println("[AuctionDAO] Lỗi khi tạo phiên đấu giá: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    public boolean approveAuction(int auctionId, String adminUsername) {
+        String sql = """
+                UPDATE auctions
+                SET status = 'OPEN', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = NULL
+                WHERE id = ? AND status = 'PENDING_APPROVAL'
+                """;
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setString(1, adminUsername);
+            statement.setInt(2, auctionId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("[AuctionDAO] Lỗi khi duyệt phiên đấu giá: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean rejectAuction(int auctionId, String adminUsername, String reason) {
+        String sql = """
+                UPDATE auctions
+                SET status = 'REJECTED', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = ?
+                WHERE id = ? AND status = 'PENDING_APPROVAL'
+                """;
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setString(1, adminUsername);
+            statement.setString(2, reason);
+            statement.setInt(3, auctionId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("[AuctionDAO] Lỗi khi từ chối phiên đấu giá: " + e.getMessage());
             return false;
         }
     }
@@ -156,15 +204,33 @@ public class AuctionDAO {
 
     public BidResult placeBid(int auctionId, String username, double amount) {
         String selectAuctionSql = """
-                SELECT current_price, status
+                SELECT current_price, status, winner_username
                 FROM auctions
                 WHERE id = ?
                 FOR UPDATE
                 """;
 
+        String selectBalanceSql = """
+                SELECT balance
+                FROM users
+                WHERE username = ?
+                FOR UPDATE
+                """;
+
+        String updateBalanceSql = """
+                UPDATE users
+                SET balance = ?
+                WHERE username = ?
+                """;
+
+        String logWalletSql = """
+                INSERT INTO wallet_transactions (username, amount, transaction_type, note)
+                VALUES (?, ?, ?, ?)
+                """;
+
         String updateAuctionSql = """
                 UPDATE auctions
-                SET current_price = ?
+                SET current_price = ?, winner_username = ?, version = version + 1
                 WHERE id = ?
                 """;
 
@@ -177,11 +243,11 @@ public class AuctionDAO {
             connection.setAutoCommit(false);
 
             try (
-                    PreparedStatement selectStatement = connection.prepareStatement(selectAuctionSql)
+                    PreparedStatement selectAuctionStatement = connection.prepareStatement(selectAuctionSql)
             ) {
-                selectStatement.setInt(1, auctionId);
+                selectAuctionStatement.setInt(1, auctionId);
 
-                try (ResultSet resultSet = selectStatement.executeQuery()) {
+                try (ResultSet resultSet = selectAuctionStatement.executeQuery()) {
                     if (!resultSet.next()) {
                         connection.rollback();
                         return new BidResult(false, "Không tìm thấy phiên đấu giá.", null);
@@ -189,6 +255,7 @@ public class AuctionDAO {
 
                     double currentPrice = resultSet.getDouble("current_price");
                     String status = resultSet.getString("status");
+                    String previousWinner = resultSet.getString("winner_username");
 
                     if (!isAuctionOpenForBidding(status)) {
                         connection.rollback();
@@ -200,13 +267,55 @@ public class AuctionDAO {
                         return new BidResult(false, "Giá đặt phải lớn hơn giá hiện tại.", currentPrice);
                     }
 
+                    Double bidderBalance = getLockedBalance(connection, selectBalanceSql, username);
+                    if (bidderBalance == null) {
+                        connection.rollback();
+                        return new BidResult(false, "Không tìm thấy ví tiền của người đặt giá.", currentPrice);
+                    }
+
+                    boolean sameWinner = previousWinner != null && previousWinner.equalsIgnoreCase(username);
+                    double availableBalance = sameWinner ? bidderBalance + currentPrice : bidderBalance;
+                    if (availableBalance < amount) {
+                        connection.rollback();
+                        return new BidResult(false,
+                                "Số dư không đủ để đặt giá. Số dư khả dụng: " + availableBalance,
+                                currentPrice);
+                    }
+
                     try (
-                            PreparedStatement updateStatement = connection.prepareStatement(updateAuctionSql);
+                            PreparedStatement updateBalanceStatement = connection.prepareStatement(updateBalanceSql);
+                            PreparedStatement logWalletStatement = connection.prepareStatement(logWalletSql);
+                            PreparedStatement updateAuctionStatement = connection.prepareStatement(updateAuctionSql);
                             PreparedStatement insertBidStatement = connection.prepareStatement(insertBidSql)
                     ) {
-                        updateStatement.setDouble(1, amount);
-                        updateStatement.setInt(2, auctionId);
-                        updateStatement.executeUpdate();
+                        if (sameWinner) {
+                            // Người đang dẫn đầu tự nâng giá: thay khoản giữ cũ bằng khoản giữ mới.
+                            double newBalance = availableBalance - amount;
+                            updateUserBalance(updateBalanceStatement, username, newBalance);
+                            logWallet(logWalletStatement, username, currentPrice,
+                                    "REFUND_BID_HOLD", "Refund previous hold before increasing bid");
+                            logWallet(logWalletStatement, username, -amount,
+                                    "BID_HOLD", "Hold new leading bid amount");
+                        } else {
+                            // Hoàn tiền cho người dẫn đầu cũ trước khi giữ tiền người dẫn đầu mới.
+                            if (previousWinner != null && !previousWinner.isBlank()) {
+                                Double previousBalance = getLockedBalance(connection, selectBalanceSql, previousWinner);
+                                if (previousBalance != null) {
+                                    updateUserBalance(updateBalanceStatement, previousWinner, previousBalance + currentPrice);
+                                    logWallet(logWalletStatement, previousWinner, currentPrice,
+                                            "REFUND_BID_HOLD", "Refund because another bidder outbid this user");
+                                }
+                            }
+
+                            updateUserBalance(updateBalanceStatement, username, bidderBalance - amount);
+                            logWallet(logWalletStatement, username, -amount,
+                                    "BID_HOLD", "Hold leading bid amount");
+                        }
+
+                        updateAuctionStatement.setDouble(1, amount);
+                        updateAuctionStatement.setString(2, username);
+                        updateAuctionStatement.setInt(3, auctionId);
+                        updateAuctionStatement.executeUpdate();
 
                         insertBidStatement.setInt(1, auctionId);
                         insertBidStatement.setString(2, username);
@@ -215,7 +324,7 @@ public class AuctionDAO {
                     }
 
                     connection.commit();
-                    return new BidResult(true, "Đặt giá thành công.", amount);
+                    return new BidResult(true, "Đặt giá thành công. Hệ thống đã tạm giữ số tiền bid trong ví.", amount);
                 }
 
             } catch (SQLException e) {
@@ -229,6 +338,33 @@ public class AuctionDAO {
         } catch (SQLException e) {
             return new BidResult(false, "Lỗi kết nối database: " + e.getMessage(), null);
         }
+    }
+
+    private Double getLockedBalance(Connection connection, String selectBalanceSql, String username) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(selectBalanceSql)) {
+            statement.setString(1, username == null ? null : username.trim());
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDouble("balance");
+                }
+            }
+        }
+        return null;
+    }
+
+    private void updateUserBalance(PreparedStatement statement, String username, double newBalance) throws SQLException {
+        statement.setDouble(1, newBalance);
+        statement.setString(2, username == null ? null : username.trim());
+        statement.executeUpdate();
+    }
+
+    private void logWallet(PreparedStatement statement, String username, double amount,
+                           String type, String note) throws SQLException {
+        statement.setString(1, username == null ? null : username.trim());
+        statement.setDouble(2, amount);
+        statement.setString(3, type);
+        statement.setString(4, note);
+        statement.executeUpdate();
     }
 
     private AuctionDTO mapResultSetToAuctionDTO(ResultSet resultSet) throws SQLException {
