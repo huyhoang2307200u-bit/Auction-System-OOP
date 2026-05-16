@@ -303,4 +303,15 @@ public class ServerApiClient implements Closeable {
             socket.close();
         }
     }
+    // Thêm hàm này vào class ServerApiClient
+    public List<com.auction.dto.BidDto> getTransactionHistory() throws IOException {
+        Request request = new Request();
+        request.setType(RequestType.GET_TRANSACTION_HISTORY);
+        Response response = send(request);
+        if (!response.isSuccess()) {
+            return new ArrayList<>();
+        }
+        Type type = new TypeToken<List<com.auction.dto.BidDto>>() {}.getType();
+        return gson.fromJson(gson.toJsonTree(response.getData()), type);
+    }
 }

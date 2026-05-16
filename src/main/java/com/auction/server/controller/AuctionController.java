@@ -101,4 +101,8 @@ public class AuctionController {
         }
         return auctionService.placeBid(request.getAuctionId(), user.getUsername(), user.getRole(), request.getAmount());
     }
+    // Thêm hàm này vào AuctionController
+    public Response getTransactionHistory() {
+        return new Response(true, "Thành công", auctionService.getTransactionHistory());
+    }
 }

@@ -29,5 +29,6 @@ public enum RequestType {
 
     SUBSCRIBE_AUCTION,
 
-    EXIT
+    EXIT,
+    GET_TRANSACTION_HISTORY,
 }

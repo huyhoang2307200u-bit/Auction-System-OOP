@@ -427,9 +427,19 @@ public class AuctionListController {
 
     @FXML
     private void handleOpenHistory(ActionEvent event) {
-        showNotification("Thông báo", "Bản giao diện server hiện chưa đọc lịch sử bid từ database. Dữ liệu bid vẫn được lưu trong bảng bids.");
-    }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/TransactionHistory.fxml"));
+            javafx.scene.Parent root = loader.load();
 
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root, 700, 450)); // Kích thước giao diện
+            stage.setTitle("Lịch sử giao dịch hệ thống");
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showNotification("Lỗi", "Không thể mở màn hình lịch sử giao dịch: " + e.getMessage());
+        }
+    }
     @FXML
     private void handleOpenNewWindow() {
         try {
@@ -448,8 +458,50 @@ public class AuctionListController {
 
     private void updateChart(Item item) {
         if (priceChart == null || item == null) return;
-        priceSeries.getData().clear();
-        priceSeries.getData().add(new XYChart.Data<>("Hiện tại", item.getCurrentPrice()));
+
+        new Thread(() -> {
+            try {
+                List<com.auction.dto.BidDto> allHistory = apiClient.getTransactionHistory();
+                Platform.runLater(() -> {
+                    priceSeries.getData().clear();
+
+                    List<com.auction.dto.BidDto> itemBids = allHistory.stream()
+                            .filter(b -> item.getName().equals(b.getItemName()))
+                            .sorted((b1, b2) -> {
+                                try {
+                                    java.time.LocalDateTime t1 = b1.getTimestamp() != null ? java.time.LocalDateTime.parse(b1.getTimestamp()) : java.time.LocalDateTime.MIN;
+                                    java.time.LocalDateTime t2 = b2.getTimestamp() != null ? java.time.LocalDateTime.parse(b2.getTimestamp()) : java.time.LocalDateTime.MIN;
+                                    return t1.compareTo(t2);
+                                } catch (Exception e) { return 0; }
+                            })
+                            .toList();
+
+                    if (itemBids.isEmpty()) {
+                        priceSeries.getData().add(new XYChart.Data<>("Khởi điểm", item.getCurrentPrice()));
+                    } else {
+                        int index = 1;
+                        for (com.auction.dto.BidDto bid : itemBids) {
+                            String timeStr = "Lần " + index++;
+                            try {
+                                if (bid.getTimestamp() != null) {
+                                    java.time.LocalDateTime dt = java.time.LocalDateTime.parse(bid.getTimestamp());
+                                    timeStr = dt.format(TIME_FORMATTER);
+                                    // Make category unique by appending hidden spaces or index if needed, but let's try direct time first
+                                    // XYChart categories must be unique. Let's append newline and index to ensure uniqueness.
+                                    timeStr += "\n(" + (index - 1) + ")";
+                                }
+                            } catch (Exception e) {}
+                            priceSeries.getData().add(new XYChart.Data<>(timeStr, bid.getAmount().doubleValue()));
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    priceSeries.getData().clear();
+                    priceSeries.getData().add(new XYChart.Data<>("Hiện tại", item.getCurrentPrice()));
+                });
+            }
+        }).start();
     }
 
     private void updateDepositReviewIndicator() {
@@ -494,6 +546,7 @@ public class AuctionListController {
             updateBalanceLabel();
             updateDepositReviewIndicator();
             showUnreadNotificationsForCurrentUser();
+            updateChart(getSelectedServerItem());
         });
     }
 

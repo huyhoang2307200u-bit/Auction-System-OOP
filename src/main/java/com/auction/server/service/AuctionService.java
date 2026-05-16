@@ -210,4 +210,8 @@ public class AuctionService {
             );
         }
     }
+    // Thêm hàm này vào AuctionService
+    public List<com.auction.dto.BidDto> getTransactionHistory() {
+        return auctionDAO.getTransactionHistory();
+    }
 }

@@ -119,6 +119,8 @@ public class RequestProcessor {
                 currentUser = null;
                 return new Response(true, "Tạm biệt! Đang ngắt kết nối với server.", null);
 
+            case GET_TRANSACTION_HISTORY:
+                return auctionController.getTransactionHistory();
             default:
                 return new Response(false, "Loại yêu cầu chưa được hỗ trợ: " + type, null);
         }
