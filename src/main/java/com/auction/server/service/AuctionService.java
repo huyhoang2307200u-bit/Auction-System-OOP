@@ -155,9 +155,13 @@ public class AuctionService {
         if (maxBid == null || maxBid <= 0 || increment == null || increment <= 0) {
             return new Response(false, "maxBid và increment phải lớn hơn 0.", null);
         }
-        return new Response(true,
-                "Server đã nhận cấu hình auto-bid. Logic auto-bid database có thể mở rộng ở AuctionDAO/auto_bids.",
-                null);
+        boolean registered = auctionDAO.registerAutoBid(auctionId, username, maxBid, increment);
+        if (registered) {
+            RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_AUCTION_UPDATE", "Có cấu hình Auto-Bid mới."));
+            return new Response(true, "Đã lưu cấu hình auto-bid và hệ thống sẽ tự động đặt giá.", null);
+        } else {
+            return new Response(false, "Không thể lưu cấu hình auto-bid. Vui lòng thử lại.", null);
+        }
     }
 
     public Response placeBid(Integer auctionId, String username, String role, Double amount) {
