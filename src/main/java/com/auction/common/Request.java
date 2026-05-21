@@ -22,6 +22,7 @@ public class Request {
     private Double maxBid;
     private Double increment;
     private String rejectionReason;
+    private String imageDataUrl;
 
     public Request() {
     }
@@ -160,6 +161,14 @@ public class Request {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getImageDataUrl() {
+        return imageDataUrl;
+    }
+
+    public void setImageDataUrl(String imageDataUrl) {
+        this.imageDataUrl = imageDataUrl;
     }
 
     @Override

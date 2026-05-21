@@ -42,7 +42,7 @@ public class AuctionService {
         return new Response(true, "Lấy chi tiết phiên đấu giá thành công.", auction);
     }
 
-    public Response createAuction(String sellerUsername, String role, String itemName, String description, String category, Double startPrice, Integer durationMinutes) {
+    public Response createAuction(String sellerUsername, String role, String itemName, String description, String category, Double startPrice, Integer durationMinutes, String imageDataUrl) {
         if (!Role.SELLER.name().equalsIgnoreCase(role) && !Role.ADMIN.name().equalsIgnoreCase(role)) {
             return new Response(false, "Chỉ Seller hoặc Admin được tạo sản phẩm đấu giá.", null);
         }
@@ -61,7 +61,8 @@ public class AuctionService {
                 category,
                 startPrice,
                 durationMinutes,
-                initialStatus
+                initialStatus,
+                imageDataUrl
         );
 
         if (created && Role.SELLER.name().equalsIgnoreCase(role)) {

@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
     private static final String URL = System.getenv().getOrDefault(
             "AUCTION_DB_URL",
-            "jdbc:mysql://localhost:3306/auction_system?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            "jdbc:mysql://localhost:3306/auction_system?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true"
     );
     private static final String USER = System.getenv().getOrDefault("AUCTION_DB_USER", "root");
     private static final String PASSWORD = System.getenv().getOrDefault("AUCTION_DB_PASSWORD", "123456789");

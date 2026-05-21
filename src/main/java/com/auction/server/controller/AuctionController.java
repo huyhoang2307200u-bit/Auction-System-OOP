@@ -34,7 +34,8 @@ public class AuctionController {
                 request.getDescription(),
                 request.getCategory(),
                 request.getAmount(),
-                request.getDurationMinutes()
+                request.getDurationMinutes(),
+                request.getImageDataUrl()
         );
     }
     public Response finishAuction(AuthenticatedUser user, Request request) {

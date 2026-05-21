@@ -16,7 +16,7 @@ public class AuctionDAO {
         List<AuctionDTO> auctions = new ArrayList<>();
 
         String sql = """
-                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time, image_url
                 FROM auctions
                 ORDER BY id ASC
                 """;
@@ -40,7 +40,7 @@ public class AuctionDAO {
 
     public AuctionDTO getAuctionById(int auctionId) {
         String sql = """
-                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time, image_url
                 FROM auctions
                 WHERE id = ?
                 """;
@@ -65,18 +65,18 @@ public class AuctionDAO {
     }
 
     public boolean createAuction(String itemName, String description, double startPrice, String status) {
-        return createAuction(null, itemName, description, "ELECTRONICS", startPrice, 10, status);
+        return createAuction(null, itemName, description, "ELECTRONICS", startPrice, 10, status, null);
     }
 
     public boolean createAuction(String sellerUsername, String itemName, String description, double startPrice, String status) {
-        return createAuction(sellerUsername, itemName, description, "ELECTRONICS", startPrice, 10, status);
+        return createAuction(sellerUsername, itemName, description, "ELECTRONICS", startPrice, 10, status, null);
     }
 
     public boolean createAuction(String sellerUsername, String itemName, String description,
-                                 String category, double startPrice, Integer durationMinutes, String status) {
+                                 String category, double startPrice, Integer durationMinutes, String status, String imageUrl) {
         String sql = """
-                INSERT INTO auctions (seller_username, item_name, description, category, starting_price, current_price, end_time, status)
-                VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?)
+                INSERT INTO auctions (seller_username, item_name, description, category, starting_price, current_price, end_time, status, image_url)
+                VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?, ?)
                 """;
 
         int safeDuration = durationMinutes == null || durationMinutes <= 0 ? 10 : durationMinutes;
@@ -94,6 +94,7 @@ public class AuctionDAO {
             statement.setDouble(6, startPrice);
             statement.setInt(7, safeDuration);
             statement.setString(8, status);
+            statement.setString(9, imageUrl);
 
             return statement.executeUpdate() > 0;
 
@@ -168,7 +169,7 @@ public class AuctionDAO {
         List<AuctionDTO> expiredAuctions = new ArrayList<>();
 
         String selectSql = """
-                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time
+                SELECT id, item_name, description, current_price, status, seller_username, winner_username, end_time, image_url
                 FROM auctions
                 WHERE status IN ('OPEN', 'RUNNING')
                   AND end_time IS NOT NULL
@@ -461,7 +462,8 @@ public class AuctionDAO {
                 resultSet.getString("status"),
                 resultSet.getString("seller_username"),
                 resultSet.getString("winner_username"),
-                resultSet.getTimestamp("end_time") == null ? null : resultSet.getTimestamp("end_time").toLocalDateTime().toString()
+                resultSet.getTimestamp("end_time") == null ? null : resultSet.getTimestamp("end_time").toLocalDateTime().toString(),
+                resultSet.getString("image_url")
         );
     }
 

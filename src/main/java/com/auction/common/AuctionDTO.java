@@ -9,16 +9,17 @@ public class AuctionDTO {
     private String sellerUsername;
     private String winnerUsername;
     private String endTime;
+    private String imageUrl;
 
     public AuctionDTO() {
     }
 
     public AuctionDTO(int id, String itemName, String description, double currentPrice, String status) {
-        this(id, itemName, description, currentPrice, status, null, null, null);
+        this(id, itemName, description, currentPrice, status, null, null, null, null);
     }
 
     public AuctionDTO(int id, String itemName, String description, double currentPrice, String status,
-                      String sellerUsername, String winnerUsername, String endTime) {
+                      String sellerUsername, String winnerUsername, String endTime, String imageUrl) {
         this.id = id;
         this.itemName = itemName;
         this.description = description;
@@ -27,6 +28,7 @@ public class AuctionDTO {
         this.sellerUsername = sellerUsername;
         this.winnerUsername = winnerUsername;
         this.endTime = endTime;
+        this.imageUrl = imageUrl;
     }
 
     public int getId() { return id; }
@@ -52,6 +54,9 @@ public class AuctionDTO {
 
     public String getEndTime() { return endTime; }
     public void setEndTime(String endTime) { this.endTime = endTime; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @Override
     public String toString() {

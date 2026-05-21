@@ -161,7 +161,7 @@ public class ServerApiClient implements Closeable {
         return gson.fromJson(gson.toJsonTree(response.getData()), type);
     }
 
-    public void createAuction(String itemName, String description, String category, double startPrice, int durationMinutes) throws IOException {
+    public void createAuction(String itemName, String description, String category, double startPrice, int durationMinutes, String imageDataUrl) throws IOException {
         Request request = new Request();
         request.setType(RequestType.CREATE_AUCTION);
         request.setItemName(itemName);
@@ -169,6 +169,7 @@ public class ServerApiClient implements Closeable {
         request.setCategory(category);
         request.setAmount(startPrice);
         request.setDurationMinutes(durationMinutes);
+        request.setImageDataUrl(imageDataUrl);
         ensureSuccess(send(request));
     }
 

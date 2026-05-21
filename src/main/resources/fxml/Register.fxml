@@ -2,15 +2,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" spacing="10" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+<VBox alignment="CENTER" spacing="15" stylesheets="@../css/style.css" styleClass="root" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.controller.RegisterController">
-    <Label text="ĐĂNG KÝ TÀI KHOẢN" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+    <Label text="ĐĂNG KÝ TÀI KHOẢN" styleClass="header-label" style="-fx-text-fill: #2c3e50;"/>
 
-    <TextField fx:id="usernameField" promptText="Tên đăng nhập" maxWidth="200"/>
-    <PasswordField fx:id="passwordField" promptText="Mật khẩu" maxWidth="200"/>
+    <TextField fx:id="usernameField" promptText="Tên đăng nhập" maxWidth="200" styleClass="text-field"/>
+    <PasswordField fx:id="passwordField" promptText="Mật khẩu" maxWidth="200" styleClass="text-field"/>
 
-    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò" maxWidth="200"/>
+    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò" maxWidth="200" styleClass="combo-box"/>
 
-    <Button text="Đăng ký" onAction="#handleRegister" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+    <Button text="Đăng ký" onAction="#handleRegister" styleClass="button, btn-success" prefWidth="200"/>
     <Hyperlink text="Đã có tài khoản? Đăng nhập" onAction="#goToLogin"/>
 </VBox>

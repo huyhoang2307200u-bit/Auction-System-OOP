@@ -13,6 +13,8 @@ import com.auction.util.MoneyUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -37,10 +39,13 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class AuctionListController {
 
@@ -67,6 +72,7 @@ public class AuctionListController {
     @FXML private Label userInfoLabel;
     @FXML private Label selectedItemLabel;
     @FXML private LineChart<String, Number> priceChart;
+    @FXML private ImageView itemImageView;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM");
 
@@ -81,12 +87,22 @@ public class AuctionListController {
     public void initialize() {
         configureTable();
         configureChart();
+        startCountdownTimer();
         apiClient.addRealtimeListener(this::handleRealtimeEvent);
 
         itemTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             updateInputStates(newSelection);
             updateChart(newSelection);
+            updateImage(newSelection);
         });
+    }
+
+    private void startCountdownTimer() {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+            itemTable.refresh();
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
     }
 
     private void configureTable() {
@@ -108,8 +124,20 @@ public class AuctionListController {
         colName.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
         colCurrentPrice.setCellValueFactory(data -> new SimpleStringProperty(MoneyUtil.formatVnd(data.getValue().getCurrentPriceValue())));
         colHighestBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getHighestBidderName()));
-        colEndTime.setCellValueFactory(data -> new SimpleStringProperty(
-                data.getValue().getEndTime() == null ? "Chưa đặt" : data.getValue().getEndTime().format(TIME_FORMATTER)));
+        colEndTime.setCellValueFactory(data -> {
+            LocalDateTime end = data.getValue().getEndTime();
+            if (end == null) return new SimpleStringProperty("Chưa đặt");
+            if (!data.getValue().isAuctionActive()) return new SimpleStringProperty("Đã kết thúc");
+            
+            java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), end);
+            if (duration.isNegative() || duration.isZero()) {
+                return new SimpleStringProperty("Đã kết thúc");
+            }
+            long hours = duration.toHours();
+            long minutes = duration.toMinutesPart();
+            long seconds = duration.toSecondsPart();
+            return new SimpleStringProperty(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+        });
         colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
     }
 
@@ -222,6 +250,20 @@ public class AuctionListController {
         if (btnEndAuction != null && isAdmin) {
             btnEndAuction.setText(pendingApproval ? "Duyệt phiên" : "Kết thúc phiên");
             btnEndAuction.setDisable(item == null || (!pendingApproval && !selectedAndActive));
+        }
+    }
+
+    private void updateImage(Item item) {
+        if (itemImageView == null) return;
+        if (item != null && item.getImageDataUrl() != null && !item.getImageDataUrl().isEmpty()) {
+            try {
+                Image image = new Image(item.getImageDataUrl());
+                itemImageView.setImage(image);
+            } catch (Exception e) {
+                itemImageView.setImage(null);
+            }
+        } else {
+            itemImageView.setImage(null);
         }
     }
 

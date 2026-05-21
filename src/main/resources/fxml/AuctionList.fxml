@@ -2,8 +2,9 @@
 <?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.auction.controller.AuctionListController">
+<BorderPane stylesheets="@../css/style.css" styleClass="root" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="com.auction.controller.AuctionListController">
     <top>
         <VBox style="-fx-background-color: #2c3e50;">
             <HBox alignment="CENTER_LEFT" style="-fx-padding: 15;">
@@ -15,31 +16,31 @@
 
     <left>
         <VBox prefWidth="210" style="-fx-background-color: #ecf0f1; -fx-padding: 10; -fx-spacing: 10;">
-            <Button maxWidth="Infinity" style="-fx-alignment: CENTER_LEFT;" text="Danh sách đấu giá" />
-            <Button fx:id="btnAddItem" maxWidth="Infinity" onAction="#handleOpenAddItem" style="-fx-alignment: CENTER_LEFT;" text="Quản lý sản phẩm" />
-            <Button maxWidth="Infinity" onAction="#handleOpenHistory" style="-fx-alignment: CENTER_LEFT;" text="Lịch sử giao dịch" />
+            <Button maxWidth="Infinity" styleClass="sidebar-button" text="Danh sách đấu giá" />
+            <Button fx:id="btnAddItem" maxWidth="Infinity" onAction="#handleOpenAddItem" styleClass="sidebar-button" text="Quản lý sản phẩm" />
+            <Button maxWidth="Infinity" onAction="#handleOpenHistory" styleClass="sidebar-button" text="Lịch sử giao dịch" />
 
             <Separator />
             <Label text="Ví tài khoản" style="-fx-font-weight: bold;" />
             <Label fx:id="balanceLabel" text="Số dư ví: 0VND" />
-            <TextField fx:id="depositAmountField" promptText="VD: 1.000.000VND" />
+            <TextField fx:id="depositAmountField" promptText="VD: 1.000.000VND" styleClass="text-field" />
             <Button fx:id="btnDeposit" maxWidth="Infinity" onAction="#handleDepositAction"
-                    style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;" text="Gửi yêu cầu nạp" />
+                    styleClass="button, btn-warning" text="Gửi yêu cầu nạp" />
             <Button fx:id="btnReviewDeposits" maxWidth="Infinity" onAction="#handleReviewDeposits"
-                    style="-fx-background-color: #16a085; -fx-text-fill: white; -fx-font-weight: bold;" text="Duyệt yêu cầu nạp tiền" />
+                    styleClass="button, btn-info" text="Duyệt yêu cầu nạp tiền" />
             <Label fx:id="pendingDepositLabel" wrapText="true" style="-fx-text-fill: #c0392b; -fx-font-weight: bold;" text="Không có yêu cầu nạp đang chờ." />
 
             <Separator />
             <Label text="Auto-Bidding" style="-fx-font-weight: bold;" />
-            <TextField fx:id="autoMaxBidField" promptText="VD: 2.000.000VND" />
-            <TextField fx:id="autoIncrementField" promptText="VD: 50.000VND" />
+            <TextField fx:id="autoMaxBidField" promptText="VD: 2.000.000VND" styleClass="text-field" />
+            <TextField fx:id="autoIncrementField" promptText="VD: 50.000VND" styleClass="text-field" />
             <Button fx:id="btnAutoBid" maxWidth="Infinity" onAction="#handleAutoBidAction"
-                    style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-weight: bold;" text="Bật auto-bid" />
+                    styleClass="button, btn-primary" text="Bật auto-bid" />
 
             <Region VBox.vgrow="ALWAYS" />
 
             <Button maxWidth="Infinity" onAction="#handleOpenNewWindow"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                    styleClass="button, btn-secondary"
                     text="Giả lập người dùng" />
         </VBox>
     </left>
@@ -63,24 +64,31 @@
                 </TableView>
             </VBox>
             <VBox spacing="8" style="-fx-padding: 10 20 20 20;">
-                <Label fx:id="selectedItemLabel" style="-fx-font-weight: bold;" text="Chưa chọn phiên" />
-                <LineChart fx:id="priceChart" legendVisible="false" title="Biểu đồ giá realtime">
-                    <xAxis>
-                        <CategoryAxis label="Thời gian" />
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis label="Giá cao nhất" />
-                    </yAxis>
-                </LineChart>
+                <HBox spacing="20">
+                    <VBox spacing="10" alignment="TOP_CENTER">
+                        <Label fx:id="selectedItemLabel" style="-fx-font-weight: bold; -fx-font-size: 14px;" text="Chưa chọn phiên" />
+                        <HBox styleClass="image-view-wrapper" maxWidth="160">
+                            <ImageView fx:id="itemImageView" fitWidth="150" fitHeight="150" preserveRatio="true"/>
+                        </HBox>
+                    </VBox>
+                    <LineChart fx:id="priceChart" legendVisible="false" title="Biểu đồ giá realtime" HBox.hgrow="ALWAYS">
+                        <xAxis>
+                            <CategoryAxis label="Thời gian" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis label="Giá cao nhất" />
+                        </yAxis>
+                    </LineChart>
+                </HBox>
             </VBox>
         </SplitPane>
     </center>
 
     <bottom>
         <HBox alignment="CENTER_RIGHT" prefHeight="70.0" spacing="15.0" style="-fx-padding: 15; -fx-background-color: #f4f4f4; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;">
-            <TextField fx:id="bidAmountField" prefHeight="35.0" prefWidth="170.0" promptText="VD: 1.000.000VND" />
-            <Button fx:id="btnBid" onAction="#handleBidAction" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" text="Đấu giá" />
-            <Button fx:id="btnEndAuction" onAction="#handleEndAuction" prefHeight="35.0" prefWidth="130.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Kết thúc phiên" />
+            <TextField fx:id="bidAmountField" prefHeight="35.0" prefWidth="170.0" promptText="VD: 1.000.000VND" styleClass="text-field" />
+            <Button fx:id="btnBid" onAction="#handleBidAction" prefHeight="35.0" prefWidth="100.0" styleClass="button, btn-success" text="Đấu giá" />
+            <Button fx:id="btnEndAuction" onAction="#handleEndAuction" prefHeight="35.0" prefWidth="130.0" styleClass="button, btn-danger" text="Kết thúc phiên" />
         </HBox>
     </bottom>
 </BorderPane>

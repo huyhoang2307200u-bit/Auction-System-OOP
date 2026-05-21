@@ -2,7 +2,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.auction.controller.TransactionHistoryController">
+<BorderPane stylesheets="@../css/style.css" styleClass="root" xmlns:fx="http://javafx.com/fxml" fx:controller="com.auction.controller.TransactionHistoryController">
     <center>
         <TableView fx:id="historyTable" BorderPane.alignment="CENTER">
             <columns>

@@ -36,6 +36,7 @@ public class ServerAuctionItem extends Electronics {
         setHighestBidderName(dto.getWinnerUsername() == null || dto.getWinnerUsername().isBlank()
                 ? "Chưa có"
                 : dto.getWinnerUsername());
+        setImageDataUrl(dto.getImageUrl() == null ? "" : dto.getImageUrl());
     }
 
     @Override

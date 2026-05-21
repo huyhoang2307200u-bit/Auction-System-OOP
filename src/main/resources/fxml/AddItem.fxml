@@ -1,35 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 
-<VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #f4f4f4;" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.controller.AddItemController" prefWidth="460">
+<VBox spacing="15" stylesheets="@../css/style.css" styleClass="root" style="-fx-padding: 25;" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.controller.AddItemController" prefWidth="550">
 
     <Label text="THÊM SẢN PHẨM ĐẤU GIÁ"
-           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+           styleClass="header-label" style="-fx-text-fill: #2c3e50;"/>
 
     <GridPane vgap="10" hgap="10">
         <Label text="Loại sản phẩm:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="categoryComboBox" prefWidth="260" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <ComboBox fx:id="categoryComboBox" prefWidth="260" styleClass="combo-box" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
         <Label text="Tên sản phẩm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="nameField" promptText="Nhập tên sản phẩm..." GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <TextField fx:id="nameField" promptText="Nhập tên sản phẩm..." styleClass="text-field" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
         <Label text="Mô tả:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Mô tả ngắn về sản phẩm..." GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <TextArea fx:id="descriptionArea" prefRowCount="3" promptText="Mô tả ngắn về sản phẩm..." styleClass="text-area" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
         <Label text="Giá khởi điểm:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <TextField fx:id="priceField" promptText="VD: 1.000.000VND" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        <TextField fx:id="priceField" promptText="VD: 1.000.000VND" styleClass="text-field" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
         <Label text="Thời lượng (phút):" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-        <TextField fx:id="durationMinutesField" promptText="VD: 10" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+        <TextField fx:id="durationMinutesField" promptText="VD: 10" styleClass="text-field" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Hình ảnh:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <VBox spacing="5" GridPane.rowIndex="5" GridPane.columnIndex="1">
+            <HBox spacing="10">
+                <Button text="Chọn ảnh" onAction="#handleChooseImage" styleClass="button, btn-secondary"/>
+                <Label fx:id="imageNameLabel" text="Chưa chọn ảnh" style="-fx-text-fill: #7f8c8d; -fx-padding: 5 0 0 0;"/>
+            </HBox>
+            <HBox styleClass="image-view-wrapper" maxWidth="130">
+                <ImageView fx:id="previewImageView" fitWidth="120" fitHeight="120" preserveRatio="true"/>
+            </HBox>
+        </VBox>
     </GridPane>
 
     <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
         <Button text="Hủy" onAction="#handleCancel"
-                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-cursor: hand;"/>
+                styleClass="button, btn-secondary"/>
 
         <Button text="Lưu sản phẩm" onAction="#handleSaveItem"
-                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                styleClass="button, btn-success"/>
     </HBox>
 </VBox>
