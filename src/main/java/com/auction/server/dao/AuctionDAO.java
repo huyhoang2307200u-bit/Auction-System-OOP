@@ -329,7 +329,7 @@ public class AuctionDAO {
 
         String updateAuctionSql = """
                 UPDATE auctions
-                SET current_price = ?, winner_username = ?, status = 'RUNNING', version = version + 1
+                SET current_price = ?, winner_username = ?, status = 'RUNNING', version = version + 1, end_time = ?
                 WHERE id = ?
                 """;
 
@@ -357,9 +357,22 @@ public class AuctionDAO {
                         return new BidResult(false, "Phiên đấu giá đã đóng hoặc không thể đặt giá.", currentPrice);
                     }
 
-                    if (resultSet.getTimestamp("end_time") != null
-                            && !resultSet.getTimestamp("end_time").toLocalDateTime().isAfter(java.time.LocalDateTime.now())) {
-                        return new BidResult(false, "Phiên đấu giá đã hết thời gian. Vui lòng tải lại danh sách.", currentPrice);
+                    java.time.LocalDateTime endTime = null;
+                    if (resultSet.getTimestamp("end_time") != null) {
+                        endTime = resultSet.getTimestamp("end_time").toLocalDateTime();
+                        if (!endTime.isAfter(java.time.LocalDateTime.now())) {
+                            return new BidResult(false, "Phiên đấu giá đã hết thời gian. Vui lòng tải lại danh sách.", currentPrice);
+                        }
+                    }
+
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    boolean timeExtended = false;
+                    if (endTime != null) {
+                        java.time.Duration duration = java.time.Duration.between(now, endTime);
+                        if (duration.getSeconds() <= 30 && duration.getSeconds() >= 0) {
+                            endTime = endTime.plusMinutes(1);
+                            timeExtended = true;
+                        }
                     }
 
                     if (amount <= currentPrice) {
@@ -411,7 +424,12 @@ public class AuctionDAO {
 
                         updateAuctionStatement.setDouble(1, amount);
                         updateAuctionStatement.setString(2, username);
-                        updateAuctionStatement.setInt(3, auctionId);
+                        if (endTime != null) {
+                            updateAuctionStatement.setTimestamp(3, java.sql.Timestamp.valueOf(endTime));
+                        } else {
+                            updateAuctionStatement.setNull(3, java.sql.Types.TIMESTAMP);
+                        }
+                        updateAuctionStatement.setInt(4, auctionId);
                         updateAuctionStatement.executeUpdate();
 
                         insertBidStatement.setInt(1, auctionId);
@@ -421,7 +439,7 @@ public class AuctionDAO {
                         insertBidStatement.executeUpdate();
                     }
 
-                    return new BidResult(true, "Đặt giá thành công. Hệ thống đã tạm giữ số tiền bid trong ví.", amount);
+                    return new BidResult(true, "Đặt giá thành công. Hệ thống đã tạm giữ số tiền bid trong ví.", amount, timeExtended);
                 }
         }
     }

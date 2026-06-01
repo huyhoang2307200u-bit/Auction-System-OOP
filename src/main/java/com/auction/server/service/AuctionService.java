@@ -181,6 +181,9 @@ public class AuctionService {
         }
 
         BidResult bidResult = auctionDAO.placeBid(auctionId, username, amount);
+        if (bidResult.isSuccess() && bidResult.isTimeExtended()) {
+            RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_AUCTION_UPDATE", "Gia hạn thời gian đấu giá do Anti-Sniping."));
+        }
         return new Response(bidResult.isSuccess(), bidResult.getMessage(), bidResult.getCurrentPrice());
     }
 
