@@ -125,6 +125,9 @@ public class AuctionListController {
         colCurrentPrice.setCellValueFactory(data -> new SimpleStringProperty(MoneyUtil.formatVnd(data.getValue().getCurrentPriceValue())));
         colHighestBidder.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getHighestBidderName()));
         colEndTime.setCellValueFactory(data -> {
+            if (data.getValue() instanceof ServerAuctionItem serverItem && "PENDING_APPROVAL".equalsIgnoreCase(serverItem.getServerStatus())) {
+                return new SimpleStringProperty("Chưa bắt đầu");
+            }
             LocalDateTime end = data.getValue().getEndTime();
             if (end == null) return new SimpleStringProperty("Chưa đặt");
             if (!data.getValue().isAuctionActive()) return new SimpleStringProperty("Đã kết thúc");

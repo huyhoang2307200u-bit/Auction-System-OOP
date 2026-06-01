@@ -108,7 +108,12 @@ public class AuctionDAO {
     public boolean approveAuction(int auctionId, String adminUsername) {
         String sql = """
                 UPDATE auctions
-                SET status = 'OPEN', reviewed_by = ?, reviewed_at = NOW(), rejection_reason = NULL
+                SET end_time = DATE_ADD(NOW(), INTERVAL TIMESTAMPDIFF(SECOND, created_at, end_time) SECOND),
+                    start_time = NOW(),
+                    status = 'OPEN',
+                    reviewed_by = ?,
+                    reviewed_at = NOW(),
+                    rejection_reason = NULL
                 WHERE id = ? AND status = 'PENDING_APPROVAL'
                 """;
 
