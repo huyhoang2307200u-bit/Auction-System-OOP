@@ -32,9 +32,19 @@ public class AuctionController {
                 user.getRole(),
                 request.getItemName(),
                 request.getDescription(),
-                request.getAmount()
+                request.getCategory(),
+                request.getAmount(),
+                request.getDurationMinutes(),
+                request.getImageDataUrl()
         );
     }
+    public Response finishAuction(AuthenticatedUser user, Request request) {
+        if (user == null) {
+            return new Response(false, "Bạn cần đăng nhập để kết thúc phiên.", null);
+        }
+        return auctionService.finishAuction(user.getRole(), request.getAuctionId());
+    }
+
 
     public Response deleteAuction(AuthenticatedUser user, Request request) {
         if (user == null) {
@@ -91,5 +101,9 @@ public class AuctionController {
             return new Response(false, "Số tiền đặt giá phải lớn hơn 0.", null);
         }
         return auctionService.placeBid(request.getAuctionId(), user.getUsername(), user.getRole(), request.getAmount());
+    }
+    // Thêm hàm này vào AuctionController
+    public Response getTransactionHistory() {
+        return new Response(true, "Thành công", auctionService.getTransactionHistory());
     }
 }

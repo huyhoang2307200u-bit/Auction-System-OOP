@@ -2,32 +2,40 @@ package com.auction.service;
 
 import com.auction.model.Admin;
 import com.auction.model.Bidder;
+import com.auction.model.Role;
+import com.auction.model.Seller;
 import com.auction.model.User;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AuthService {
-    // Nơi lưu trữ tài khoản tạm thời khi chưa nối Socket Server
-    private static final List<User> users = new ArrayList<>();
+    private static final List<User> users = new CopyOnWriteArrayList<>();
 
     static {
-        // Khởi tạo sẵn 2 tài khoản mặc định để bạn test cho nhanh (khỏi cần đăng ký lại mỗi lần chạy app)
-        // Tài khoản 1: Username = admin | Pass = 123
-        users.add(new Admin(1, "Quản trị viên", "admin", "123", "ADMIN"));
-        // Tài khoản 2: Username = user | Pass = 123
-        users.add(new Bidder(2, "Người đấu giá", "user", "123", "BIDDER"));
+        seedDefaultUsers();
+    }
+
+    private AuthService() {
     }
 
     public static boolean register(User user) {
-        // Kiểm tra xem tên đăng nhập đã tồn tại chưa
+        if (user == null || user.getUsername() == null || user.getUsername().isBlank()) {
+            return false;
+        }
+        // Không cho người dùng tự đăng ký Admin. Admin duy nhất được seed sẵn.
+        if (user.getRole() == Role.ADMIN) {
+            return false;
+        }
         for (User u : users) {
-            if (u.getUsername().equals(user.getUsername())) {
-                return false; // Trùng tên đăng nhập -> Đăng ký thất bại
+            if (u.getUsername().equalsIgnoreCase(user.getUsername())) {
+                return false;
             }
         }
         users.add(user);
         return true;
     }
+
     public static User findUserById(String userId) {
         if (userId == null || userId.isBlank()) {
             return null;
@@ -53,12 +61,58 @@ public class AuthService {
     }
 
     public static User login(String username, String password) {
+        if (username == null || password == null) {
+            return null;
+        }
         for (User u : users) {
-            // So sánh tên đăng nhập và mật khẩu
-            if (u.getUsername().equals(username) && u.getPassword().equals(password)) {
+            if (u.getUsername().equalsIgnoreCase(username.trim()) && u.getPassword().equals(password)) {
                 return u;
             }
         }
-        return null; // Không tìm thấy hoặc sai mật khẩu
+        return null;
+    }
+
+    public static List<User> snapshotUsers() {
+        return new ArrayList<>(users);
+    }
+
+    public static void restoreUsers(List<User> savedUsers) {
+        users.clear();
+        if (savedUsers != null) {
+            users.addAll(savedUsers);
+        }
+        ensureDefaultUsersExist();
+    }
+
+    public static void resetForTesting() {
+        users.clear();
+        seedDefaultUsers();
+    }
+
+    private static void seedDefaultUsers() {
+        if (!users.isEmpty()) {
+            return;
+        }
+        Admin admin = new Admin(1, "Quản trị viên", "admin", "123", "ADMIN");
+        Seller seller = new Seller(2, "Người bán", "seller", "123", "SELLER");
+        Bidder bidder = new Bidder(3, "Người đấu giá", "user", "123", "BIDDER");
+        bidder.deposit(5000.0);
+        users.add(admin);
+        users.add(seller);
+        users.add(bidder);
+    }
+
+    private static void ensureDefaultUsersExist() {
+        if (findUserByUsername("admin") == null) {
+            users.add(new Admin(1, "Quản trị viên", "admin", "123", "ADMIN"));
+        }
+        if (findUserByUsername("seller") == null) {
+            users.add(new Seller(2, "Người bán", "seller", "123", "SELLER"));
+        }
+        if (findUserByUsername("user") == null) {
+            Bidder bidder = new Bidder(3, "Người đấu giá", "user", "123", "BIDDER");
+            bidder.deposit(5000.0);
+            users.add(bidder);
+        }
     }
 }

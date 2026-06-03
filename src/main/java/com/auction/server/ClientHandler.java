@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -35,10 +36,10 @@ public class ClientHandler implements Runnable {
 
         try (
                 BufferedReader input = new BufferedReader(
-                        new InputStreamReader(clientSocket.getInputStream())
+                        new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8)
                 )
         ) {
-            output = new PrintWriter(clientSocket.getOutputStream(), true);
+            output = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
             RealtimeClientRegistry.register(output);
             String rawJson;
 
@@ -65,10 +66,12 @@ public class ClientHandler implements Runnable {
                 }
 
                 if (request != null
-                        && (request.getType() == RequestType.APPROVE_AUCTION
-                        || request.getType() == RequestType.REJECT_AUCTION)
+                        && (request.getType() == RequestType.CREATE_AUCTION
+                        || request.getType() == RequestType.APPROVE_AUCTION
+                        || request.getType() == RequestType.REJECT_AUCTION
+                        || request.getType() == RequestType.FINISH_AUCTION)
                         && response.isSuccess()) {
-                    RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_MODERATION_UPDATE", response.getMessage()));
+                    RealtimeClientRegistry.broadcast(new Response(true, "REALTIME_AUCTION_UPDATE", response.getMessage()));
                 }
 
                 if (request != null && request.getType() == RequestType.EXIT) {
