@@ -98,6 +98,17 @@ public class WalletManager {
         return request;
     }
 
+    public List<DepositRequest> snapshotRequests() {
+        return new ArrayList<>(depositRequests);
+    }
+
+    public void restoreRequests(List<DepositRequest> savedRequests) {
+        depositRequests.clear();
+        if (savedRequests != null) {
+            depositRequests.addAll(savedRequests);
+        }
+    }
+
     public void resetForTesting() {
         depositRequests.clear();
     }

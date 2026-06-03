@@ -5,7 +5,7 @@ import java.net.*;
 
 public class AuctionClientService {
     private static final String SERVER_IP = "localhost";
-    private static final int SERVER_PORT = 5000;
+    private static final int SERVER_PORT = 9999;
 
     public String sendRequest(String message) {
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);

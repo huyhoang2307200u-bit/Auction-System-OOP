@@ -1,7 +1,7 @@
 package com.auction.controller;
 
+import com.auction.client.ServerApiClient;
 import com.auction.model.User;
-import com.auction.service.AuthService;
 import com.auction.util.SceneManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,16 +16,19 @@ public class LoginController {
 
     @FXML
     public void handleLogin(ActionEvent event) {
-        String username = usernameField.getText().trim();
-        String password = passwordField.getText().trim();
+        String username = usernameField.getText() == null ? "" : usernameField.getText().trim();
+        String password = passwordField.getText() == null ? "" : passwordField.getText().trim();
 
-        // Dùng AuthService để kiểm tra
-        User loggedInUser = AuthService.login(username, password);
+        if (username.isEmpty() || password.isEmpty()) {
+            showErrorAlert("Thiếu thông tin", "Vui lòng nhập tên đăng nhập và mật khẩu.");
+            return;
+        }
 
-        if (loggedInUser != null) {
+        try {
+            User loggedInUser = ServerApiClient.getInstance().login(username, password);
             SceneManager.switchSceneWithUser(usernameField, "AuctionList.fxml", loggedInUser);
-        } else {
-            showErrorAlert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu!");
+        } catch (Exception e) {
+            showErrorAlert("Đăng nhập thất bại", e.getMessage() == null ? "Không thể kết nối server." : e.getMessage());
         }
     }
 

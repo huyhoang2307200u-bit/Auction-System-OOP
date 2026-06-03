@@ -21,8 +21,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
             statement.setString(2, password);
 
@@ -77,8 +76,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, normalizedUsername);
             statement.setString(2, password);
             statement.setString(3, normalizedDisplayName);
@@ -104,8 +102,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, DEFAULT_ADMIN_USERNAME);
             statement.setString(2, DEFAULT_ADMIN_PASSWORD);
             statement.setString(3, DEFAULT_ADMIN_DISPLAY_NAME);
@@ -127,8 +124,7 @@ public class UserDAO {
         try (
                 Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()
-        ) {
+                ResultSet resultSet = statement.executeQuery()) {
             return resultSet.next();
         } catch (SQLException e) {
             System.out.println("[UserDAO] Lỗi kiểm tra Admin: " + e.getMessage());
@@ -146,8 +142,7 @@ public class UserDAO {
         try (
                 Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet resultSet = statement.executeQuery()
-        ) {
+                ResultSet resultSet = statement.executeQuery()) {
             if (resultSet.next()) {
                 return resultSet.getInt("total");
             }
@@ -166,8 +161,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -189,8 +183,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -215,8 +208,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -242,8 +234,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -268,8 +259,7 @@ public class UserDAO {
 
         try (
                 Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, username == null ? null : username.trim());
 
             try (ResultSet resultSet = statement.executeQuery()) {

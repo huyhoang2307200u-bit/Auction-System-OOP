@@ -12,6 +12,7 @@ public class Request {
 
     private Integer auctionId;
     private Integer depositRequestId;
+    private Integer notificationId;
     private Double amount;
 
     private String itemName;
@@ -21,6 +22,7 @@ public class Request {
     private Double maxBid;
     private Double increment;
     private String rejectionReason;
+    private String imageDataUrl;
 
     public Request() {
     }
@@ -89,6 +91,14 @@ public class Request {
         this.depositRequestId = depositRequestId;
     }
 
+    public Integer getNotificationId() {
+        return notificationId;
+    }
+
+    public void setNotificationId(Integer notificationId) {
+        this.notificationId = notificationId;
+    }
+
     public Double getAmount() {
         return amount;
     }
@@ -153,6 +163,14 @@ public class Request {
         this.rejectionReason = rejectionReason;
     }
 
+    public String getImageDataUrl() {
+        return imageDataUrl;
+    }
+
+    public void setImageDataUrl(String imageDataUrl) {
+        this.imageDataUrl = imageDataUrl;
+    }
+
     @Override
     public String toString() {
         return "Request{" +
@@ -162,6 +180,7 @@ public class Request {
                 ", role='" + role + '\'' +
                 ", auctionId=" + auctionId +
                 ", depositRequestId=" + depositRequestId +
+                ", notificationId=" + notificationId +
                 ", amount=" + amount +
                 ", itemName='" + itemName + '\'' +
                 '}';
