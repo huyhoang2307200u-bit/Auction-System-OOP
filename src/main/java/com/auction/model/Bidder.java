@@ -7,8 +7,8 @@ public class Bidder extends User {
         super();
     }
 
-    public Bidder(String username, String displayName, String passwordSalt, String passwordHash) {
-        super(username, displayName, passwordSalt, passwordHash, Role.BIDDER);
+    public Bidder(String username, String displayName, String password) {
+        super(username, displayName, password, Role.BIDDER);
     }
 
     public Bidder(int id, String name, String username, String password, String roleName) {

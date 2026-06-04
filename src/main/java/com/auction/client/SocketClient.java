@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class SocketClient {
-    private static final String SERVER_HOST = "localhost";
+    private static final String SERVER_HOST = "26.201.190.189";
     private static final int SERVER_PORT = 9999;
 
     private final Gson gson;

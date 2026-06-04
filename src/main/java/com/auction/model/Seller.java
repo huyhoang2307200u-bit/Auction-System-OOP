@@ -7,8 +7,8 @@ public class Seller extends User {
         super();
     }
 
-    public Seller(String username, String displayName, String passwordSalt, String passwordHash) {
-        super(username, displayName, passwordSalt, passwordHash, Role.SELLER);
+    public Seller(String username, String displayName, String password) {
+        super(username, displayName, password, Role.SELLER);
     }
 
     public Seller(int id, String name, String username, String password, String roleName) {

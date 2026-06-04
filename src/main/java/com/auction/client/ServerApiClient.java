@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class ServerApiClient implements Closeable {
-    private static final String DEFAULT_HOST = System.getenv().getOrDefault("AUCTION_SERVER_HOST", "localhost");
+    private static final String DEFAULT_HOST = System.getenv().getOrDefault("AUCTION_SERVER_HOST", "26.201.190.189");
     private static final int DEFAULT_PORT = Integer.parseInt(System.getenv().getOrDefault("AUCTION_SERVER_PORT", "9999"));
     private static ServerApiClient instance;
 

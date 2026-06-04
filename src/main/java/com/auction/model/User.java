@@ -9,8 +9,7 @@ public abstract class User extends Entity {
 
     private String username;
     private String displayName;
-    private String passwordSalt;
-    private String passwordHash;
+    private String password;
     private Role role;
     private BigDecimal balance = BigDecimal.ZERO;
 
@@ -18,12 +17,11 @@ public abstract class User extends Entity {
         super();
     }
 
-    protected User(String username, String displayName, String passwordSalt, String passwordHash, Role role) {
+    protected User(String username, String displayName, String password, Role role) {
         super();
         this.username = username;
         this.displayName = displayName;
-        this.passwordSalt = passwordSalt;
-        this.passwordHash = passwordHash;
+        this.password = password;
         this.role = role;
         this.balance = BigDecimal.ZERO;
     }
@@ -32,8 +30,7 @@ public abstract class User extends Entity {
         super();
         this.username = username;
         this.displayName = displayName;
-        this.passwordSalt = "";
-        this.passwordHash = password;
+        this.password = password;
         this.role = role;
         this.balance = BigDecimal.ZERO;
     }
@@ -53,15 +50,7 @@ public abstract class User extends Entity {
     }
 
     public String getPassword() {
-        return passwordHash;
-    }
-
-    public String getPasswordSalt() {
-        return passwordSalt;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
+        return password;
     }
 
     public Role getRole() {
